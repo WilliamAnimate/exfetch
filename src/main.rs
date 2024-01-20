@@ -4,12 +4,8 @@
 #![allow(unused_imports)]
 //////////////////////////////
 
-use std::env;
-use std::process::Command;
+use std::{thread, io::{self, Write}, process::Command};
 use colored::*;
-
-use std::io::{self, Write};
-use std::thread;
 
 fn main() -> io::Result<()> {
     // usrname //////////////////////////
@@ -40,15 +36,12 @@ fn main() -> io::Result<()> {
     let shell = shell_thread.join().unwrap();
     let kernel = kernel_thread.join().unwrap();
 
-    ////////////////////////////////////////
-
     ///////////////////////////////////////////////////////////////////////
 
     let mut handle = io::stdout().lock(); // locks stdout so any further writes (eg print) will be
                                           // faster since it does not have to lock stdout and then
                                           // unlock it on a write.
 
-    // write!(handle, "hello world").unwrap();
     write!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), String::from_utf8_lossy(&name_usr.stdout)).unwrap();
     write!(handle, "    {} ~ {}", "Shell".purple(), String::from_utf8_lossy(&shell.stdout)).unwrap();
     write!(handle, "    {} ~ {}", "Kernel".purple(), String::from_utf8_lossy(&kernel.stdout)).unwrap();
