@@ -4,33 +4,50 @@
 #![allow(unused_imports)]
 //////////////////////////////
 
-use std::env;
-use std::process::Command;
+use std::{thread, io::{self, Write}, process::Command};
 use colored::*;
 
-fn main() {
+fn main() -> io::Result<()> {
     // usrname //////////////////////////
-    let name_usr = Command::new("whoami")
-    .output()
-    .expect("Can't fetch your username");
+    let name_usr_thread = thread::spawn(|| {
+        Command::new("whoami")
+            .output()
+            .expect("Can't fetch your username")
+    });
     /////////////////////////////////////
 
     // Linux stuff, idk what to call this //
-    let shell = Command::new("/bin/bash")
-    .arg("-c")
-    .arg("echo $SHELL")
-    .output()
-    .expect("Can't fetch your shell");
+    let shell_thread = thread::spawn(|| {
+        Command::new("/bin/bash")
+            .arg("-c")
+            .arg("echo $SHELL")
+            .output()
+            .expect("Can't fetch your shell")
+    });
 
-    let kernel = Command::new("uname")
-    .arg("-r")
-    .output()
-    .expect("Can't fetch your kernel ver.");
-    ////////////////////////////////////////
+    let kernel_thread = thread::spawn(|| {
+        Command::new("uname")
+            .arg("-r")
+            .output()
+            .expect("Can't fetch your kernel ver.")
+    });
 
-///////////////////////////////////////////////////////////////////////
-print!("{}{} - {}", "x".red().bold(), "Fetch".cyan(), String::from_utf8_lossy(&name_usr.stdout));
-print!("    {} ~ {}", "Shell".purple(), String::from_utf8_lossy(&shell.stdout));
-print!("    {} ~ {}", "Kernel".purple(), String::from_utf8_lossy(&kernel.stdout));
+    let name_usr = name_usr_thread.join().unwrap();
+    let shell = shell_thread.join().unwrap();
+    let kernel = kernel_thread.join().unwrap();
+
+    ///////////////////////////////////////////////////////////////////////
+
+    let mut handle = io::stdout().lock(); // locks stdout so you can write to it with write!. this
+                                          // is faster because print! and println! locks stdout,
+                                          // writes, then unlocks it after, which is slow.
+
+    write!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), String::from_utf8_lossy(&name_usr.stdout)).unwrap();
+    write!(handle, "    {} ~ {}", "Shell".purple(), String::from_utf8_lossy(&shell.stdout)).unwrap();
+    write!(handle, "    {} ~ {}", "Kernel".purple(), String::from_utf8_lossy(&kernel.stdout)).unwrap();
+
+    drop(handle);
+
+    Ok(())
 }
 
