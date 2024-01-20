@@ -16,6 +16,28 @@ fn main() -> io::Result<()> {
     });
     /////////////////////////////////////
 
+    // my hope is that this code is so ludicrously bad that im strictly forbidden to write rust code ever again
+    // and that there is actually a one-liner solution in bash instead of doing this monstrosity
+    let distro_thread = thread::spawn(|| -> Result<String, ()> {
+        let raw = Command::new("/bin/sh")
+            .arg("-c")
+            .arg("cat /etc/os-release | grep PRETTY_NAME")
+            .output()
+            .expect("Can't fetch your distro");
+
+        // match String::from_utf8(raw.stdout) {
+        //     Ok(output) => {
+        //         let parts: Vec<&str> = output.split("=").collect();
+        //         Ok(parts[1].replace("\"", ""))
+        //     }
+        //     Err(err) => panic!("\"how did we get here\" achivement obtained, blame github/williamanimate: {}", err),
+        // }
+        
+        let output = String::from_utf8(raw.stdout).unwrap();
+        let parts: Vec<&str> = output.split("=").collect();
+        Ok(parts[1].replace("\"", ""))
+    });
+
     // Linux stuff, idk what to call this //
     let shell_thread = thread::spawn(|| {
         Command::new("/bin/bash")
@@ -33,6 +55,7 @@ fn main() -> io::Result<()> {
     });
 
     let name_usr = name_usr_thread.join().unwrap();
+    let distro = distro_thread.join().unwrap();
     let shell = shell_thread.join().unwrap();
     let kernel = kernel_thread.join().unwrap();
 
@@ -43,6 +66,7 @@ fn main() -> io::Result<()> {
                                           // writes, then unlocks it after, which is slow.
 
     write!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), String::from_utf8_lossy(&name_usr.stdout)).unwrap();
+    write!(handle, "    {} ~ {}", "Distro".purple(), distro.unwrap()).unwrap();
     write!(handle, "    {} ~ {}", "Shell".purple(), String::from_utf8_lossy(&shell.stdout)).unwrap();
     write!(handle, "    {} ~ {}", "Kernel".purple(), String::from_utf8_lossy(&kernel.stdout)).unwrap();
 
