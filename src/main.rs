@@ -25,14 +25,6 @@ fn main() -> io::Result<()> {
             .output()
             .expect("Can't fetch your distro");
 
-        // match String::from_utf8(raw.stdout) {
-        //     Ok(output) => {
-        //         let parts: Vec<&str> = output.split("=").collect();
-        //         Ok(parts[1].replace("\"", ""))
-        //     }
-        //     Err(err) => panic!("\"how did we get here\" achivement obtained, blame github/williamanimate: {}", err),
-        // }
-        
         let output = String::from_utf8(raw.stdout).unwrap();
         let parts: Vec<&str> = output.split("=").collect();
         Ok(parts[1].replace("\"", ""))
