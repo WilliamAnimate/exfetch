@@ -38,9 +38,9 @@ fn main() -> io::Result<()> {
 
     ///////////////////////////////////////////////////////////////////////
 
-    let mut handle = io::stdout().lock(); // locks stdout so any further writes (eg print) will be
-                                          // faster since it does not have to lock stdout and then
-                                          // unlock it on a write.
+    let mut handle = io::stdout().lock(); // locks stdout so you can write to it with write!. this
+                                          // is faster because print! and println! locks stdout,
+                                          // writes, then unlocks it after, which is slow.
 
     write!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), String::from_utf8_lossy(&name_usr.stdout)).unwrap();
     write!(handle, "    {} ~ {}", "Shell".purple(), String::from_utf8_lossy(&shell.stdout)).unwrap();
