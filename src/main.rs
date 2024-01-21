@@ -2,22 +2,24 @@
 #![allow(unused_doc_comments)]
 #![allow(unused_variables)]
 #![allow(unused_imports)]
+#![allow(unused_must_use)]
 //////////////////////////////
 
 use std::{thread, io::{self, Write}, process::Command};
 use colored::*;
 
+pub mod packages;
+
 fn main() -> io::Result<()> {
     // usrname //////////////////////////
-    let name_usr_thread = thread::spawn(|| {
+    let name_thread = thread::spawn(|| {
         Command::new("whoami")
             .output()
             .expect("Can't fetch your username")
     });
     /////////////////////////////////////
 
-    // my hope is that this code is so ludicrously bad that im strictly forbidden to write rust code ever again
-    // and that there is actually a one-liner solution in bash instead of doing this monstrosity
+    // OS Related stuff /////////////////////////////////////////
     let distro_thread = thread::spawn(|| -> Result<String, ()> {
         let raw = Command::new("/bin/sh")
             .arg("-c")
@@ -29,12 +31,26 @@ fn main() -> io::Result<()> {
         let parts: Vec<&str> = output.split("=").collect();
         Ok(parts[1].replace("\"", ""))
     });
+    
+    let arch_thread = thread::spawn(|| {
+        Command::new("uname")
+            .arg("-m")
+            .output()
+            .expect("Can't fetch your shell")
+    });
 
-    // Linux stuff, idk what to call this //
-    let shell_thread = thread::spawn(|| {
-        Command::new("/bin/bash")
+    let desktop_thread = thread::spawn(|| {
+        Command::new("/bin/sh")
             .arg("-c")
-            .arg("echo $SHELL")
+            .arg("printenv | grep XDG_SESSION_DESKTOP | head -n1 | cut -d '=' -f2")
+            .output()
+            .expect("Can't fetch your desktop")
+    });
+
+    let shell_thread = thread::spawn(|| {
+        Command::new("/bin/sh")
+            .arg("-c")
+            .arg("echo $SHELL | head -n1 | cut -d '/' -f4")
             .output()
             .expect("Can't fetch your shell")
     });
@@ -43,13 +59,17 @@ fn main() -> io::Result<()> {
         Command::new("uname")
             .arg("-r")
             .output()
-            .expect("Can't fetch your kernel ver.")
+            .expect("Can't fetch your kernel")
     });
+    /////////////////////////////////////////////////////////////
 
-    let name_usr = name_usr_thread.join().unwrap();
+    let usr = name_thread.join().unwrap();
     let distro = distro_thread.join().unwrap();
     let shell = shell_thread.join().unwrap();
     let kernel = kernel_thread.join().unwrap();
+    let desktop = desktop_thread.join().unwrap();
+    let pkg = packages::get_num_packages().to_string();
+    let arch = arch_thread.join().unwrap();
 
     ///////////////////////////////////////////////////////////////////////
 
@@ -57,13 +77,13 @@ fn main() -> io::Result<()> {
                                           // is faster because print! and println! locks stdout,
                                           // writes, then unlocks it after, which is slow.
 
-    write!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), String::from_utf8_lossy(&name_usr.stdout)).unwrap();
-    write!(handle, "    {} ~ {}", "Distro".purple(), distro.unwrap()).unwrap();
-    write!(handle, "    {} ~ {}", "Shell".purple(), String::from_utf8_lossy(&shell.stdout)).unwrap();
-    write!(handle, "    {} ~ {}", "Kernel".purple(), String::from_utf8_lossy(&kernel.stdout)).unwrap();
-
+    write!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), String::from_utf8_lossy(&usr.stdout)).unwrap();
+    write!(handle, "   {} ~ {}", "Distro".purple(), distro.unwrap()).unwrap();
+    write!(handle, "   {} ~ {}", "Shell".purple(), String::from_utf8_lossy(&shell.stdout)).unwrap();
+    write!(handle, "   {} ~ {}", "Kernel".purple(), String::from_utf8_lossy(&kernel.stdout)).unwrap();
+    write!(handle, "   {} ~ {}", "Desktop".purple(), String::from_utf8_lossy(&desktop.stdout));
+    write!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg, String::from_utf8_lossy(&arch.stdout)).unwrap();
     drop(handle);
-
     Ok(())
 }
 
