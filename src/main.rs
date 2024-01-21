@@ -15,7 +15,7 @@ fn main() -> io::Result<()> {
     let name_thread = thread::spawn(|| {
         Command::new("/bin/sh")
             .arg("-c")
-            .arg("whoami")
+            .arg("echo $USER")
             .output()
             .expect("Can't fetch your username")
     });
