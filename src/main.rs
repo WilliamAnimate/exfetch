@@ -13,7 +13,9 @@ pub mod packages;
 fn main() -> io::Result<()> {
     // usrname //////////////////////////
     let name_thread = thread::spawn(|| {
-        Command::new("whoami")
+        Command::new("/bin/sh")
+            .arg("-c")
+            .arg("whoami")
             .output()
             .expect("Can't fetch your username")
     });
