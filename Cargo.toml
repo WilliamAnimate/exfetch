@@ -5,3 +5,18 @@ edition = "2021"
 
 [dependencies]
 colored = "2.1.0"
+
+[profile.release]
+opt-level = 'z'
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+[profile.optimized-build]
+inherits = "release"
+opt-level = 'z'
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
