@@ -73,7 +73,6 @@ fn main() -> io::Result<()> {
     let desktop = desktop_thread.join().unwrap();
     let pkg = packages::get_num_packages().to_string();
     let arch = arch_thread.join().unwrap();
-
     ///////////////////////////////////////////////////
 
     let mut handle = io::stdout().lock(); // locks stdout so you can write to it with write!. this
