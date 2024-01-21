@@ -13,18 +13,17 @@ jobs:
   build:
     runs-on: ubuntu-22.04
     steps:
-      uses: actions/checkout@v2
-    - name: Install Rust nightly
+    - uses: actions/checkout@v2
+    - name: Installing Rust (nightly)
       uses: actions-rs/toolchain@v1
-        with:
+      with:
             toolchain: nightly
             override: true
             components: rustfmt, clippy
             target: x86_64-unknown-linux-gnu
             profile: optimized-build
 
-    - name: Build
-    - uses: actions/checkout@v3
+    - name: Compiling xFetch
       run: RUSTFLAGS="-Zlocation-detail=none" cargo build -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
     - name: Run tests
       run: cargo test --verbose
