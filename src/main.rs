@@ -11,7 +11,7 @@ use colored::*;
 pub mod packages;
 
 fn main() -> io::Result<()> {
-    // usrname //////////////////////////
+    // usrname ////////////////////////////////
     let name_thread = thread::spawn(|| {
         Command::new("/bin/sh")
             .arg("-c")
@@ -19,7 +19,7 @@ fn main() -> io::Result<()> {
             .output()
             .expect("Can't fetch your username")
     });
-    /////////////////////////////////////
+    ////////////////////////////////////////////
 
     // OS Related stuff /////////////////////////////////////////
     let distro_thread = thread::spawn(|| -> Result<String, ()> {
@@ -65,6 +65,7 @@ fn main() -> io::Result<()> {
     });
     /////////////////////////////////////////////////////////////
 
+    ///////////////////////////////////////////////////
     let usr = name_thread.join().unwrap();
     let distro = distro_thread.join().unwrap();
     let shell = shell_thread.join().unwrap();
@@ -73,7 +74,7 @@ fn main() -> io::Result<()> {
     let pkg = packages::get_num_packages().to_string();
     let arch = arch_thread.join().unwrap();
 
-    ///////////////////////////////////////////////////////////////////////
+    ///////////////////////////////////////////////////
 
     let mut handle = io::stdout().lock(); // locks stdout so you can write to it with write!. this
                                           // is faster because print! and println! locks stdout,
