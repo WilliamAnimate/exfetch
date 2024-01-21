@@ -26,7 +26,7 @@ jobs:
     - name: Running Tests
       run: cargo test --verbose
     - name: xFetch Check!
-      run: ./target/x86_64-unknown-linux-gnu/optimized-build/xfetch
+      run: ./target/x86_64-unknown-linux-gnu/optimized-build/xfetch; chmod a+x target/x86_64-unknown-linux-gnu/optimized-build/xfetch
     - name: Artifact
       uses: actions/upload-artifact@v4
       with:
