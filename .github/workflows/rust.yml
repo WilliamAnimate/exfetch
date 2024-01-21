@@ -20,9 +20,8 @@ jobs:
             toolchain: nightly
             override: true
             components: rustfmt, clippy
-            target: x86_64-unknown-linux-gnu
 
     - name: Compiling xFetch
-      run: RUSTFLAGS="-Zlocation-detail=none" cargo build --profile optimized-build -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
+      run: RUSTFLAGS="-Zlocation-detail=none" cargo build --target x86_64-unknown-linux-gnu --profile optimized-build -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
     - name: Run tests
       run: cargo test --verbose
