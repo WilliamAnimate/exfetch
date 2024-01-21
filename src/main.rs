@@ -42,7 +42,7 @@ fn main() -> io::Result<()> {
     let desktop_thread = thread::spawn(|| {
         Command::new("/bin/sh")
             .arg("-c")
-            .arg("printenv | grep XDG_SESSION_DESKTOP | head -n1 | cut -d '=' -f2")
+            .arg("echo $XDG_SESSION_DESKTOP")
             .output()
             .expect("Can't fetch your desktop")
     });
@@ -86,4 +86,3 @@ fn main() -> io::Result<()> {
     drop(handle);
     Ok(())
 }
-
