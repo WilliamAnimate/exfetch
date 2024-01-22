@@ -76,7 +76,9 @@ async fn main() -> io::Result<()> {
     let shell = shell_thread.await.unwrap();
     let kernel = kernel_thread.await.unwrap();
     let desktop = desktop_thread.await.unwrap();
-    let pkg: Result<String, _> = packages_thread.await.map(|res| res.to_string()); // oh my little precious little hack
+    let pkg: Result<String, _> = packages_thread.await.map(|pkg| pkg.to_string()); // oh my little precious little hack
+    // times tried to fix the abmove code: 1
+    // increment this value by one (1) when you do try, as a warning to future contributors to do something else.
     let arch = arch_thread.await.unwrap();
 
     ///////////////////////////////////////////////////////////////////////
@@ -90,7 +92,7 @@ async fn main() -> io::Result<()> {
     write!(handle, "   {} ~ {}", "Shell".purple(), String::from_utf8_lossy(&shell.stdout)).unwrap();
     write!(handle, "   {} ~ {}", "Kernel".purple(), String::from_utf8_lossy(&kernel.stdout)).unwrap();
     write!(handle, "   {} ~ {}", "Desktop".purple(), String::from_utf8_lossy(&desktop.stdout)).unwrap();
-    write!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg.expect("This isn't supposed to happen, report this bug immedately!").to_string(), String::from_utf8_lossy(&arch.stdout)).unwrap();
+    write!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg.expect("This isn't supposed to happen, report this bug immedately!"), String::from_utf8_lossy(&arch.stdout)).unwrap();
                                                                 // ^ good luck fixing it though, this entire thing is just an ugly hack with datatypes
     drop(handle);
     Ok(())
