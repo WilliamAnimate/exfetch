@@ -76,9 +76,7 @@ async fn main() -> io::Result<()> {
     let shell = shell_thread.await.unwrap();
     let kernel = kernel_thread.await.unwrap();
     let desktop = desktop_thread.await.unwrap();
-    let pkg: Result<String, _> = packages_thread.await.map(|pkg| pkg.to_string()); // oh my little precious little hack
-    // times tried to fix the abmove code: 1
-    // increment this value by one (1) when you do try, as a warning to future contributors to do something else.
+    let pkg: Result<String, _> = packages_thread.await.map(|pkg| pkg.to_string()); // dumb little hack
     let arch = arch_thread.await.unwrap();
 
     ///////////////////////////////////////////////////////////////////////
