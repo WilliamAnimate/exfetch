@@ -13,6 +13,10 @@ pub mod packages;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
+    // run this first because packages tend to be slow af
+    let packages_thread = spawn(async {
+        packages::get_num_packages()
+    });
     // usrname //////////////////////////
     let name_thread = spawn(async {
         Command::new("/bin/sh")
@@ -72,7 +76,7 @@ async fn main() -> io::Result<()> {
     let shell = shell_thread.await.unwrap();
     let kernel = kernel_thread.await.unwrap();
     let desktop = desktop_thread.await.unwrap();
-    let pkg = packages::get_num_packages().to_string();
+    let pkg: Result<String, _> = packages_thread.await.map(|res| res.to_string()); // oh my little precious little hack
     let arch = arch_thread.await.unwrap();
 
     ///////////////////////////////////////////////////////////////////////
@@ -86,7 +90,8 @@ async fn main() -> io::Result<()> {
     write!(handle, "   {} ~ {}", "Shell".purple(), String::from_utf8_lossy(&shell.stdout)).unwrap();
     write!(handle, "   {} ~ {}", "Kernel".purple(), String::from_utf8_lossy(&kernel.stdout)).unwrap();
     write!(handle, "   {} ~ {}", "Desktop".purple(), String::from_utf8_lossy(&desktop.stdout)).unwrap();
-    write!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg, String::from_utf8_lossy(&arch.stdout)).unwrap();
+    write!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg.expect("This isn't supposed to happen, report this bug immedately!").to_string(), String::from_utf8_lossy(&arch.stdout)).unwrap();
+                                                                // ^ good luck fixing it though, this entire thing is just an ugly hack with datatypes
     drop(handle);
     Ok(())
 }
