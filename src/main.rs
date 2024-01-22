@@ -25,7 +25,7 @@ async fn main() -> io::Result<()> {
             .output()
             .expect("Can't fetch your username")
     });
-    /////////////////////////////////////
+    ////////////////////////////////////////////
 
     // OS Related stuff /////////////////////////////////////////
     let distro_thread = spawn(async {
@@ -62,14 +62,16 @@ async fn main() -> io::Result<()> {
             .output()
             .expect("Can't fetch your shell")
     });
-
+    /////////////////////////////////////////////////////////////
+  
+    //////////////////////////////////////////
     let kernel_thread = spawn(async {
         Command::new("uname")
             .arg("-r")
             .output()
             .expect("Can't fetch your kernel")
     });
-    /////////////////////////////////////////////////////////////
+    //////////////////////////////////////////
 
     let usr = name_thread.await.unwrap();
     let distro: Result<String, std::io::Error> = distro_thread.await.unwrap(); // odd one out
@@ -78,7 +80,6 @@ async fn main() -> io::Result<()> {
     let desktop = desktop_thread.await.unwrap();
     let pkg: Result<String, _> = packages_thread.await.map(|pkg| pkg.to_string()); // dumb little hack
     let arch = arch_thread.await.unwrap();
-
     ///////////////////////////////////////////////////////////////////////
 
     let mut handle = io::stdout().lock(); // locks stdout so you can write to it with write!. this
@@ -91,7 +92,6 @@ async fn main() -> io::Result<()> {
     write!(handle, "   {} ~ {}", "Kernel".purple(), String::from_utf8_lossy(&kernel.stdout)).unwrap();
     write!(handle, "   {} ~ {}", "Desktop".purple(), String::from_utf8_lossy(&desktop.stdout)).unwrap();
     write!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg.expect("This isn't supposed to happen, report this bug immedately!"), String::from_utf8_lossy(&arch.stdout)).unwrap();
-                                                                // ^ good luck fixing it though, this entire thing is just an ugly hack with datatypes
     drop(handle);
     Ok(())
 }
