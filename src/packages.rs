@@ -1,23 +1,9 @@
-// @Author: Ruturajn <nanotiruturaj@gmail.com>
-// This is a fork for xFetch
-
-use std::process::{Command, Stdio}; // For executing shell commands.
+use std::{process::Command, path::Path, fs::read_dir};
 
 pub fn get_num_packages() -> i16 {
-    let num_packages = packages_generic("pacman", &["-Q"])
-        .or_else(|_| packages_generic("yum", &["list", "installed"]))
-        .or_else(|_| packages_generic("dpkg-query", &["-l"]))
-        .or_else(|_| packages_generic("pkg", &["info"]))
-        .or_else(|_| packages_generic("ls", &["-d", "var/db/pkg/*/*"]))
-        .or_else(|_| packages_generic("ls", &["-d", "/var/lib/scratchpkg/db/*"]))
-        .or_else(|_| packages_generic("ls", &["/var/lib/eopkg/package/"]))
-        .or_else(|_| packages_generic("xbps-query", &["-l"]))
-        .or_else(|_| packages_generic("rpm", &["-qa"]))
-        .or_else(|_| packages_nixos_based())
-        .unwrap_or_else(|_| "Unknown".to_string());
+    let entries = read_dir(Path::new("/var/lib/pacman/local")).expect("compiler forced me to add this.").count();
 
-    // Count the total number of packages
-    num_packages.lines().count() as i16
+    (entries - 1).try_into().unwrap() // `as i16` didn't work, listening to the compiler now.
 }
 
 pub fn packages_generic(cmd: &str, options: &[&str]) -> Result<String, String> {
