@@ -3,7 +3,7 @@
 
 use std::process::{Command, Stdio}; // For executing shell commands.
 
-pub fn get_num_packages() -> u32 {
+pub fn get_num_packages() -> i16 {
     let num_packages = packages_generic("pacman", &["-Q"])
         .or_else(|_| packages_generic("yum", &["list", "installed"]))
         .or_else(|_| packages_generic("dpkg-query", &["-l"]))
@@ -17,12 +17,7 @@ pub fn get_num_packages() -> u32 {
         .unwrap_or_else(|_| "Unknown".to_string());
 
     // Count the total number of packages
-    let mut total_count: u32 = 0;
-    for _ in num_packages.lines() {
-        total_count += 1;
-    }
-
-    total_count
+    num_packages.lines().count() as i16
 }
 
 pub fn packages_generic(cmd: &str, options: &[&str]) -> Result<String, String> {
