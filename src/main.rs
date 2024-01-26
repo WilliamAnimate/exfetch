@@ -13,10 +13,6 @@ pub mod packages;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    // run this first because packages tend to be slow af
-    let packages_thread = spawn(async {
-        packages::get_num_packages()
-    });
     // usrname //////////////////////////
     let name_thread = spawn(async {
         Command::new("/bin/sh")
@@ -39,21 +35,6 @@ async fn main() -> io::Result<()> {
         let parts: Vec<&str> = output.split("=").collect();
         Ok(parts[1].replace("\"", ""))
     });
-    
-    let arch_thread = spawn(async {
-        Command::new("uname")
-            .arg("-m")
-            .output()
-            .expect("Can't fetch your shell")
-    });
-
-    let desktop_thread = spawn(async {
-        Command::new("/bin/sh")
-            .arg("-c")
-            .arg("echo $XDG_SESSION_DESKTOP")
-            .output()
-            .expect("Can't fetch your desktop")
-    });
 
     let shell_thread = spawn(async {
         Command::new("/bin/sh")
@@ -63,7 +44,7 @@ async fn main() -> io::Result<()> {
             .expect("Can't fetch your shell")
     });
     /////////////////////////////////////////////////////////////
-  
+
     //////////////////////////////////////////
     let kernel_thread = spawn(async {
         Command::new("uname")
@@ -73,7 +54,26 @@ async fn main() -> io::Result<()> {
     });
     //////////////////////////////////////////
 
-    let usr = name_thread.await.unwrap();
+    let desktop_thread = spawn(async {
+        Command::new("/bin/sh")
+            .arg("-c")
+            .arg("echo $XDG_SESSION_DESKTOP")
+            .output()
+            .expect("Can't fetch your desktop")
+    });
+ 
+    let packages_thread = spawn(async {
+        packages::get_num_packages()
+    });
+
+    let arch_thread = spawn(async {
+        Command::new("uname")
+            .arg("-m")
+            .output()
+            .expect("Can't fetch your cpu architecture")
+    });
+
+    let name = name_thread.await.unwrap();
     let distro: Result<String, std::io::Error> = distro_thread.await.unwrap(); // odd one out
     let shell = shell_thread.await.unwrap();
     let kernel = kernel_thread.await.unwrap();
@@ -86,7 +86,7 @@ async fn main() -> io::Result<()> {
                                           // is faster because print! and println! locks stdout,
                                           // writes, then unlocks it after, which is slow.
 
-    write!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), String::from_utf8_lossy(&usr.stdout)).unwrap();
+    write!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), String::from_utf8_lossy(&name.stdout)).unwrap();
     write!(handle, "   {} ~ {}", "Distro".purple(), distro.unwrap()).unwrap();
     write!(handle, "   {} ~ {}", "Shell".purple(), String::from_utf8_lossy(&shell.stdout)).unwrap();
     write!(handle, "   {} ~ {}", "Kernel".purple(), String::from_utf8_lossy(&kernel.stdout)).unwrap();
