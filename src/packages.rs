@@ -2,15 +2,13 @@
 
 use std::process::{Command, Stdio};
 
-pub fn get_num_packages() -> i16 {
+pub fn get_packages() -> i16 {
     let num_packages = packages_generic("pacman", &["-Q"])
         .or_else(|_| packages_generic("yum", &["list", "installed"]))
         .or_else(|_| packages_generic("apt", &["list", "--installed"]))
-        .or_else(|_| packages_generic("pkg", &["info", "-a"]))
-        .or_else(|_| packages_generic("xbps-query", &["-l"]))
-        .or_else(|_| packages_generic("rpm", &["-qa"]))
+//        .or_else(|_| packages_generic("pkg", &["info"]))
+//        .or_else(|_| packages_generic("xbps-query", &["-l"]))
         .unwrap_or_else(|_| "0".to_string());
-
 
     // Count the total number of packages
     num_packages.lines().count() as i16
