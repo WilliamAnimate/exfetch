@@ -91,7 +91,7 @@ async fn main() -> io::Result<()> {
     write!(handle, "   {} ~ {}", "Shell".purple(), String::from_utf8_lossy(&shell.stdout)).unwrap();
     write!(handle, "   {} ~ {}", "Kernel".purple(), String::from_utf8_lossy(&kernel.stdout)).unwrap();
     write!(handle, "   {} ~ {}", "Desktop".purple(), String::from_utf8_lossy(&desktop.stdout)).unwrap();
-    write!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg.expect("This isn't supposed to happen, report this bug immedately!"), String::from_utf8_lossy(&arch.stdout)).unwrap();
+    write!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg.expect("no valid package manager found!"), String::from_utf8_lossy(&arch.stdout)).unwrap();
     drop(handle);
     Ok(())
 }
