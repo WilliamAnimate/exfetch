@@ -6,22 +6,23 @@
 //////////////////////////////
 
 use std::{io::{self, Write}, process::Command};
-use colored::*;
+use colored::Colorize;
 use tokio::task::spawn;
 
 pub mod packages;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    // run this first because packages tend to be slow af
+    // pkgs ///////////////////////////
     let packages_thread = spawn(async {
         packages::get_num_packages()
     });
+    ///////////////////////////////////
+
     // usrname //////////////////////////
     let name_thread = spawn(async {
         Command::new("/bin/sh")
-            .arg("-c")
-            .arg("echo $USER")
+            .args(["-c", "echo $USER"])
             .output()
             .expect("Can't fetch your username")
     });
@@ -29,36 +30,34 @@ async fn main() -> io::Result<()> {
 
     // OS Related stuff /////////////////////////////////////////
     let distro_thread = spawn(async {
-        let raw = Command::new("/bin/sh")
+        let distro_raw = Command::new("sh")
             .arg("-c")
-            .arg("cat /etc/os-release | grep PRETTY_NAME")
+            .args(["-c", "cat /etc/os-release | grep PRETTY_NAME"])
             .output()
             .expect("Can't fetch your distro");
 
-        let output = String::from_utf8(raw.stdout).unwrap();
-        let parts: Vec<&str> = output.split("=").collect();
-        Ok(parts[1].replace("\"", ""))
+        let distro_output = String::from_utf8(distro_raw.stdout).unwrap();
+        let distro_parts: Vec<&str> = distro_output.split("=").collect();
+        Ok(distro_parts[1].replace("\"", ""))
     });
     
     let arch_thread = spawn(async {
         Command::new("uname")
             .arg("-m")
             .output()
-            .expect("Can't fetch your shell")
+            .expect("Can't fetch your arch")
     });
 
     let desktop_thread = spawn(async {
-        Command::new("/bin/sh")
-            .arg("-c")
-            .arg("echo $XDG_SESSION_DESKTOP")
+        Command::new("sh")
+            .args(["-c", "echo $XDG_SESSION_DESKTOP"])
             .output()
             .expect("Can't fetch your desktop")
     });
 
     let shell_thread = spawn(async {
-        Command::new("/bin/sh")
-            .arg("-c")
-            .arg("echo $SHELL | head -n1 | cut -d '/' -f4")
+        Command::new("sh")
+            .args(["-c", "echo $SHELL"])
             .output()
             .expect("Can't fetch your shell")
     });
@@ -74,7 +73,7 @@ async fn main() -> io::Result<()> {
     //////////////////////////////////////////
 
     let usr = name_thread.await.unwrap();
-    let distro: Result<String, std::io::Error> = distro_thread.await.unwrap(); // odd one out
+    let distro: Result<String, std::io::Error> = distro_thread.await.unwrap();
     let shell = shell_thread.await.unwrap();
     let kernel = kernel_thread.await.unwrap();
     let desktop = desktop_thread.await.unwrap();
@@ -91,7 +90,7 @@ async fn main() -> io::Result<()> {
     write!(handle, "   {} ~ {}", "Shell".purple(), String::from_utf8_lossy(&shell.stdout)).unwrap();
     write!(handle, "   {} ~ {}", "Kernel".purple(), String::from_utf8_lossy(&kernel.stdout)).unwrap();
     write!(handle, "   {} ~ {}", "Desktop".purple(), String::from_utf8_lossy(&desktop.stdout)).unwrap();
-    write!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg.expect("This isn't supposed to happen, report this bug immedately!"), String::from_utf8_lossy(&arch.stdout)).unwrap();
+    write!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg.expect("Your distro isn't supported!"), String::from_utf8_lossy(&arch.stdout)).unwrap();
     drop(handle);
     Ok(())
 }
