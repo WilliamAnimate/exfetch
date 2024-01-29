@@ -6,60 +6,54 @@
 //////////////////////////////
 
 use std::{io::{self, Write}, process::Command};
-use colored::*;
+use colored::Colorize;
 use tokio::task::spawn;
 
 pub mod packages;
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    // usrname //////////////////////////
+    // usr //////////////////////////////
     let name_thread = spawn(async {
-        Command::new("/bin/sh")
-            .arg("-c")
-            .arg("echo $USER")
+        Command::new("sh")
+            .args(["-c", "echo $USER"])
             .output()
-            .expect("Can't fetch your username")
+            .expect("Can't fetch your USRname!")
     });
-    ////////////////////////////////////////////
-
-    // OS Related stuff /////////////////////////////////////////
-    let distro_thread = spawn(async {
-        let raw = Command::new("/bin/sh")
-            .arg("-c")
-            .arg("cat /etc/os-release | grep PRETTY_NAME")
-            .output()
-            .expect("Can't fetch your distro");
 
         let output = String::from_utf8(raw.stdout).unwrap();
         let parts: Vec<&str> = output.split("=").collect();
         Ok(parts[1].replace("\"", ""))
     });
 
-    let shell_thread = spawn(async {
-        Command::new("/bin/sh")
-            .arg("-c")
-            .arg("echo $SHELL | head -n1 | cut -d '/' -f4")
+    // OS Related ///////////////////////////////////////////////
+    let distro_thread = spawn(async {
+        let distro_raw = Command::new("sh")
+            .args(["-c", "cat /etc/os-release | grep PRETTY_NAME"])
             .output()
-            .expect("Can't fetch your shell")
+            .expect("Can't fetch your Distro!");
+
+        let distro_output = String::from_utf8(distro_raw.stdout).unwrap();
+        let distro_parts: Vec<&str> = distro_output.split("=").collect();
+        Ok(distro_parts[1].replace("\"", ""))
     });
     /////////////////////////////////////////////////////////////
 
     //////////////////////////////////////////
     let kernel_thread = spawn(async {
         Command::new("uname")
-            .arg("-r")
+            .arg("-m")
             .output()
-            .expect("Can't fetch your kernel")
+            .expect("Can't fetch your Kernel!")
     });
-    //////////////////////////////////////////
+    /////////////////////////////////////////////////////////////
 
     let desktop_thread = spawn(async {
         Command::new("/bin/sh")
             .arg("-c")
             .arg("echo $XDG_SESSION_DESKTOP")
             .output()
-            .expect("Can't fetch your desktop")
+            .expect("Can't fetch your Desktop!")
     });
  
     let packages_thread = spawn(async {
@@ -70,28 +64,24 @@ async fn main() -> io::Result<()> {
         Command::new("uname")
             .arg("-m")
             .output()
-            .expect("Can't fetch your cpu architecture")
+            .expect("Can't fetch your CPU Arch!")
     });
 
     let name = name_thread.await.unwrap();
-    let distro: Result<String, std::io::Error> = distro_thread.await.unwrap(); // odd one out
+    let distro: Result<String, std::io::Error> = distro_thread.await.unwrap();
     let shell = shell_thread.await.unwrap();
-    let kernel = kernel_thread.await.unwrap();
     let desktop = desktop_thread.await.unwrap();
-    let pkg: Result<String, _> = packages_thread.await.map(|pkg| pkg.to_string()); // dumb little hack
+    let pkg: Result<String, _> = packages_thread.await.map(|pkg| pkg.to_string());
     let arch = arch_thread.await.unwrap();
     ///////////////////////////////////////////////////////////////////////
 
-    let mut handle = io::stdout().lock(); // locks stdout so you can write to it with write!. this
-                                          // is faster because print! and println! locks stdout,
-                                          // writes, then unlocks it after, which is slow.
+    let mut handle = io::stdout().lock();
 
     write!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), String::from_utf8_lossy(&name.stdout)).unwrap();
-    write!(handle, "   {} ~ {}", "Distro".purple(), distro.unwrap()).unwrap();
     write!(handle, "   {} ~ {}", "Shell".purple(), String::from_utf8_lossy(&shell.stdout)).unwrap();
-    write!(handle, "   {} ~ {}", "Kernel".purple(), String::from_utf8_lossy(&kernel.stdout)).unwrap();
+    write!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg.expect("Your package manager is not valid!"), String::from_utf8_lossy(&arch.stdout)).unwrap();
+    write!(handle, "   {} ~ {}", "Distro".purple(), distro.unwrap()).unwrap();
     write!(handle, "   {} ~ {}", "Desktop".purple(), String::from_utf8_lossy(&desktop.stdout)).unwrap();
-    write!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg.expect("no valid package manager found!"), String::from_utf8_lossy(&arch.stdout)).unwrap();
     drop(handle);
     Ok(())
 }
