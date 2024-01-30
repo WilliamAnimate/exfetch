@@ -1,4 +1,18 @@
-`README.md` is currently being worked on.
+<img src="https://raw.githubusercontent.com/XandrCopyrighted/XandrCopyrighted/main/random/xfetch.jpg" align="right" width="300">
+
+### xFetch
+A simple fetch written in Rust.
+
+---
+
+`xFetch` only supports these package managers:
+*  pacman
+*  yum
+*  apt
+
+## Install
+* [Arch User Repository](https://aur.archlinux.org/packages/xfetch-bin)
+* [GitHub Releases](https://github.com/XandrCopyrighted/xFetch/tags)
 
 ## Build
 ```sh
