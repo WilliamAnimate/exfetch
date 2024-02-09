@@ -1,23 +1,52 @@
-// This is a fork from Fetchit for xFetch.
+// Made by William Animate [https://github.com/WilliamAnimate]
+use std::{fs, path::Path};
 
-use std::process::{Command, Stdio};
+const PACMAN_DIR: &str = "/var/lib/pacman/local";
+const DNF_DIR: &str = "/var/cache/dnf";
+const APT_DIR: &str = "/var/cache/apt/archives";
 
-pub fn get_packages() -> i16 {
-    let num_packages = packages_generic("pacman", &["-Q"])
-        .or_else(|_| packages_generic("yum", &["list", "installed"]))
-        .or_else(|_| packages_generic("apt", &["list", "--installed"]))
-//        .or_else(|_| packages_generic("pkg", &["info"]))
-//        .or_else(|_| packages_generic("xbps-query", &["-l"]))
-        .unwrap_or_else(|_| "0".to_string());
-
-    // Count the total number of packages
-    num_packages.lines().count() as i16
+macro_rules! count_files_in_directory {
+    ($path:expr) => {
+        fs::read_dir($path)
+            .map(|dir| dir.count() as i16)
+            .ok()
+    }
 }
 
-pub fn packages_generic(cmd: &str, options: &[&str]) -> Result<String, String> {
-    let packages = Command::new(cmd).args(options).output();
-    match packages {
-        Ok(x) => Ok(String::from_utf8(x.stdout).unwrap()),
-        Err(e) => Err(e.to_string()),
+macro_rules! file_exists_in_bin {
+    ($file_to_search:expr) => {
+        Path::new(&format!("/bin/{}", $file_to_search)).exists()
+    }
+}
+
+pub enum PackageManager {
+    Pacman,
+    Dnf,
+    Apt,
+    Unknown,
+}
+
+pub fn get_num_packages() -> Option<i16> {
+    let package_manager = detect_package_manager();
+    match package_manager {
+        PackageManager::Pacman => count_files_in_directory!(PACMAN_DIR),
+        PackageManager::Dnf => count_files_in_directory!(DNF_DIR),
+        PackageManager::Apt => count_files_in_directory!(APT_DIR),
+        PackageManager::Unknown => {
+            todo!("handle errors here, instead of returning None.\nBECAUSE THEN IT WILL CRASH.");
+            // None
+        }
+    }
+}
+
+fn detect_package_manager() -> PackageManager {
+    if file_exists_in_bin!("pacman") {
+        PackageManager::Pacman
+    } else if file_exists_in_bin!("dnf") {
+        PackageManager::Dnf
+    } else if file_exists_in_bin!("apt") {
+        PackageManager::Apt
+    } else {
+        PackageManager::Unknown
     }
 }
