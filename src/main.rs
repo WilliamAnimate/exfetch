@@ -1,10 +1,4 @@
-// idk, stuff ////////////////
-#![allow(unused_doc_comments)]
-#![allow(unused_variables)]
-#![allow(unused_imports)]
 #![allow(unused_must_use)]
-//////////////////////////////
-
 use std::{io::{self, Write}, process::Command};
 use colored::Colorize;
 use tokio::task::spawn;
@@ -84,8 +78,7 @@ async fn main() -> io::Result<()> {
     let mut handle = io::stdout().lock(); // lock stdout for slightly faster writing
     // the actual printing
     write!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), String::from_utf8_lossy(&usr.stdout)).unwrap();
-    let sh = String::from_utf8_lossy(&shell.stdout);
-    write_to_handle_if_not_empty!(handle, "Shell", sh);
+    write_to_handle_if_not_empty!(handle, "Shell", String::from_utf8_lossy(&shell.stdout));
     if pkg != 0 { // odd one out; too lazy to properly implement this lol
         writeln!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg, arch).unwrap();
     } else {
