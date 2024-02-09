@@ -1,6 +1,4 @@
-// Made by William Animate [https://github.com/WilliamAnimate]
-use std::{fs, path::Path};
-use std::fs::read_dir;
+use std::{fs::read_dir, path::Path};
 
 const PACMAN_DIR: &str = "/var/lib/pacman/local";
 
