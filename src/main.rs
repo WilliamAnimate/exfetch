@@ -30,7 +30,13 @@ async fn main() -> io::Result<()> {
 
         let distro_output = String::from_utf8(distro_raw.stdout).unwrap();
         let distro_parts: Vec<&str> = distro_output.split("=").collect();
-        Ok(distro_parts[1].replace("\"", ""))
+        if let Some(..) = distro_parts.get(1) {
+            let result = distro_parts[1].replace("\"", "");
+            dbg!(&result);
+            return result;
+        } else {
+            return String::new(); // an empty string
+        }
     });
 
     let desktop_thread = spawn(async {
@@ -47,31 +53,42 @@ async fn main() -> io::Result<()> {
             .expect("Can't fetch your shell")
     });
 
-    
     let packages_thread = spawn(async {
         packages::get_num_packages()
     });
 
     let arch_thread = spawn(async {
-        std::env::consts::ARCH // might be a waste of time running this in a thread?
+        std::env::consts::ARCH
     });
     //////////////////////////////////////////////////////////////////////
-    // Print to terminal idk //////////////////////////////////////////////////////////////
+    // Get data from threads //////////////////////////////////////////////////////////////
     let usr = name_thread.await.unwrap();
-    let distro: Result<String, std::io::Error> = distro_thread.await.unwrap();
+    let distro = distro_thread.await.unwrap();
     let shell = shell_thread.await.unwrap();
     let desktop = desktop_thread.await.unwrap();
     let pkg = packages_thread.await.unwrap();
     let arch = arch_thread.await.unwrap();
     ///////////////////////////////////////////////////////////////////////////////////////
     let mut handle = io::stdout().lock();
-    // nvm it's this ///////////////////////////////////////////////////////////////////////////////////////////////
+    // check if values are empty & print if not ///////////////////////////////////////////
     write!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), String::from_utf8_lossy(&usr.stdout)).unwrap();
-    write!(handle, "   {} ~ {}", "Shell".purple(), String::from_utf8_lossy(&shell.stdout)).unwrap();
-    writeln!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg, arch).unwrap();
-    write!(handle, "   {} ~ {}", "Distro".purple(), distro.unwrap()).unwrap();
-    write!(handle, "   {} ~ {}", "Desktop".purple(), String::from_utf8_lossy(&desktop.stdout)).unwrap();
-    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    let sh = String::from_utf8_lossy(&shell.stdout);
+    if sh != "\n" {
+        write!(handle, "   {} ~ {}", "Shell".purple(), sh).unwrap();
+    }
+    if pkg != 0 {
+        writeln!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg, arch).unwrap();
+    } else if !arch.is_empty() {
+        writeln!(handle, "   {} ~ {}", "Arch".purple(), arch).unwrap();
+    }
+    if !distro.is_empty() {
+        write!(handle, "   {} ~ {}", "Distro".purple(), distro).unwrap();
+    }
+    let de = String::from_utf8_lossy(&desktop.stdout);
+    if de != "\n" {
+        write!(handle, "   {} ~ {}", "Desktop".purple(), de).unwrap();
+    }
+    ///////////////////////////////////////////////////////////////////////////////////////
     drop(handle);
 Ok(())
 }
