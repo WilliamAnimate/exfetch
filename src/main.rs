@@ -20,23 +20,8 @@ async fn main() -> io::Result<()> {
             .output()
             .expect("Can't fetch your username")
     });
-
-    let shell_thread = spawn(async {
-        Command::new("sh")
-            .args(["-c", "echo $SHELL"])
-            .output()
-            .expect("Can't fetch your shell")
-    });
-
-    let desktop_thread = spawn(async {
-        Command::new("sh")
-            .args(["-c", "echo $XDG_SESSION_DESKTOP"])
-            .output()
-            .expect("Can't fetch your desktop")
-    });
     ////////////////////////////////////////////
-
-    // OS Related ///////////////////////////////////////////////
+    // OS Related ////////////////////////////////////////////////////////
     let distro_thread = spawn(async {
         let distro_raw = Command::new("sh")
             .args(["-c", "cat /etc/os-release | grep PRETTY_NAME"])
@@ -48,8 +33,23 @@ async fn main() -> io::Result<()> {
         Ok(distro_parts[1].replace("\"", ""))
     });
 
+    let desktop_thread = spawn(async {
+        Command::new("sh")
+            .args(["-c", "echo $XDG_SESSION_DESKTOP"])
+            .output()
+            .expect("Can't fetch your desktop")
+    });
+
+    let shell_thread = spawn(async {
+        Command::new("sh")
+            .args(["-c", "echo $SHELL"])
+            .output()
+            .expect("Can't fetch your shell")
+    });
+
+    
     let packages_thread = spawn(async {
-        packages::get_packages()
+        packages::get_num_packages()
     });
 
     let arch_thread = spawn(async {
@@ -58,23 +58,23 @@ async fn main() -> io::Result<()> {
             .output()
             .expect("Can't fetch your CPU arch")
     });
-    /////////////////////////////////////////////////////////////
-
+    //////////////////////////////////////////////////////////////////////
+    // Print to terminal idk //////////////////////////////////////////////////////////////
     let usr = name_thread.await.unwrap();
     let distro: Result<String, std::io::Error> = distro_thread.await.unwrap();
     let shell = shell_thread.await.unwrap();
     let desktop = desktop_thread.await.unwrap();
-    let pkg: Result<String, _> = packages_thread.await.map(|pkg| pkg.to_string());
+    let pkg: Result<String, _> = packages_thread.await.map(|pkg| pkg.unwrap().to_string());
     let arch = arch_thread.await.unwrap();
-    ///////////////////////////////////////////////////////////////////////
-
+    ///////////////////////////////////////////////////////////////////////////////////////
     let mut handle = io::stdout().lock();
-
+    // nvm it's this ///////////////////////////////////////////////////////////////////////////////////////////////
     write!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), String::from_utf8_lossy(&usr.stdout)).unwrap();
     write!(handle, "   {} ~ {}", "Shell".purple(), String::from_utf8_lossy(&shell.stdout)).unwrap();
-    write!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg.expect("Your package manager is not valid!"), String::from_utf8_lossy(&arch.stdout)).unwrap();
+    write!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg.unwrap(), String::from_utf8_lossy(&arch.stdout)).unwrap();
     write!(handle, "   {} ~ {}", "Distro".purple(), distro.unwrap()).unwrap();
     write!(handle, "   {} ~ {}", "Desktop".purple(), String::from_utf8_lossy(&desktop.stdout)).unwrap();
-drop(handle);
+    ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    drop(handle);
 Ok(())
 }
