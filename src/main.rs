@@ -53,10 +53,7 @@ async fn main() -> io::Result<()> {
     });
 
     let arch_thread = spawn(async {
-        Command::new("uname")
-            .arg("-m")
-            .output()
-            .expect("Can't fetch your CPU arch")
+        std::env::consts::ARCH // might be a waste of time running this in a thread?
     });
     //////////////////////////////////////////////////////////////////////
     // Print to terminal idk //////////////////////////////////////////////////////////////
@@ -71,7 +68,7 @@ async fn main() -> io::Result<()> {
     // nvm it's this ///////////////////////////////////////////////////////////////////////////////////////////////
     write!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), String::from_utf8_lossy(&usr.stdout)).unwrap();
     write!(handle, "   {} ~ {}", "Shell".purple(), String::from_utf8_lossy(&shell.stdout)).unwrap();
-    write!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg.unwrap(), String::from_utf8_lossy(&arch.stdout)).unwrap();
+    writeln!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg.unwrap(), arch).unwrap();
     write!(handle, "   {} ~ {}", "Distro".purple(), distro.unwrap()).unwrap();
     write!(handle, "   {} ~ {}", "Desktop".purple(), String::from_utf8_lossy(&desktop.stdout)).unwrap();
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
