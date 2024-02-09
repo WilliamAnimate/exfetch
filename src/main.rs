@@ -28,15 +28,13 @@ macro_rules! writeln_to_handle_if_not_empty {
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    // usr /////////////////////////////////////
     let name_thread = spawn(async {
         Command::new("sh")
             .args(["-c", "echo $USER"])
             .output()
             .expect("Can't fetch your username")
     });
-    ////////////////////////////////////////////
-    // OS Related ////////////////////////////////////////////////////////
+
     let distro_thread = spawn(async {
         let distro_raw = Command::new("sh")
             .args(["-c", "cat /etc/os-release | grep PRETTY_NAME"])
@@ -45,7 +43,7 @@ async fn main() -> io::Result<()> {
 
         let distro_output = String::from_utf8(distro_raw.stdout).unwrap();
         let distro_parts: Vec<&str> = distro_output.split("=").collect();
-        if let Some(..) = distro_parts.get(1) {
+        if let Some(_) = distro_parts.get(1) {
             distro_parts[1].replace("\"", "")
         } else {
             String::new() // an empty string
@@ -73,17 +71,18 @@ async fn main() -> io::Result<()> {
     let arch_thread = spawn(async {
         std::env::consts::ARCH
     });
-    //////////////////////////////////////////////////////////////////////
-    // Get data from threads //////////////////////////////////////////////////////////////
+    
+    // Get data from threads
+    // TODO: make collection not blocking other tasks somehow, but do block the actual printing part
     let usr = name_thread.await.unwrap();
     let distro = distro_thread.await.unwrap();
     let shell = shell_thread.await.unwrap();
     let desktop = desktop_thread.await.unwrap();
     let pkg = packages_thread.await.unwrap();
     let arch = arch_thread.await.unwrap();
-    ///////////////////////////////////////////////////////////////////////////////////////
-    let mut handle = io::stdout().lock();
-    // check if values are empty & print if not ///////////////////////////////////////////
+
+    let mut handle = io::stdout().lock(); // lock stdout for slightly faster writing
+    // the actual printing
     write!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), String::from_utf8_lossy(&usr.stdout)).unwrap();
     let sh = String::from_utf8_lossy(&shell.stdout);
     write_to_handle_if_not_empty!(handle, "Shell", sh);
@@ -94,7 +93,7 @@ async fn main() -> io::Result<()> {
     }
     write_to_handle_if_not_empty!(handle, "Distro", distro);
     write_to_handle_if_not_empty!(handle, "Desktop", String::from_utf8_lossy(&desktop.stdout));
-    ///////////////////////////////////////////////////////////////////////////////////////
+
     drop(handle);
-Ok(())
+    Ok(())
 }
