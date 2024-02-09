@@ -61,14 +61,14 @@ async fn main() -> io::Result<()> {
     let distro: Result<String, std::io::Error> = distro_thread.await.unwrap();
     let shell = shell_thread.await.unwrap();
     let desktop = desktop_thread.await.unwrap();
-    let pkg: Result<String, _> = packages_thread.await.map(|pkg| pkg.unwrap().to_string());
+    let pkg = packages_thread.await.unwrap();
     let arch = arch_thread.await.unwrap();
     ///////////////////////////////////////////////////////////////////////////////////////
     let mut handle = io::stdout().lock();
     // nvm it's this ///////////////////////////////////////////////////////////////////////////////////////////////
     write!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), String::from_utf8_lossy(&usr.stdout)).unwrap();
     write!(handle, "   {} ~ {}", "Shell".purple(), String::from_utf8_lossy(&shell.stdout)).unwrap();
-    writeln!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg.unwrap(), arch).unwrap();
+    writeln!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg, arch).unwrap();
     write!(handle, "   {} ~ {}", "Distro".purple(), distro.unwrap()).unwrap();
     write!(handle, "   {} ~ {}", "Desktop".purple(), String::from_utf8_lossy(&desktop.stdout)).unwrap();
     ////////////////////////////////////////////////////////////////////////////////////////////////////////////////
