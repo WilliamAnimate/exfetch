@@ -1,4 +1,4 @@
-name: xCompile
+name: xCompile_main
 
 on:
   push:
