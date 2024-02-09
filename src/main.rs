@@ -31,11 +31,9 @@ async fn main() -> io::Result<()> {
         let distro_output = String::from_utf8(distro_raw.stdout).unwrap();
         let distro_parts: Vec<&str> = distro_output.split("=").collect();
         if let Some(..) = distro_parts.get(1) {
-            let result = distro_parts[1].replace("\"", "");
-            dbg!(&result);
-            return result;
+            distro_parts[1].replace("\"", "")
         } else {
-            return String::new(); // an empty string
+            String::new() // an empty string
         }
     });
 
