@@ -11,6 +11,21 @@ use tokio::task::spawn;
 
 pub mod packages;
 
+macro_rules! write_to_handle_if_not_empty {
+    ($handle:expr, $entry:expr, $value:expr) => {
+        if $value != "\n" || $value.is_empty() {
+            write!($handle, "   {} ~ {}", $entry.purple(), $value);
+        }
+    }
+}
+macro_rules! writeln_to_handle_if_not_empty {
+    ($handle:expr, $entry:expr, $value:expr) => {
+        if $value != "\n" || $value.is_empty() {
+            writeln!($handle, "   {} ~ {}", $entry.purple(), $value);
+        }
+    }
+}
+
 #[tokio::main]
 async fn main() -> io::Result<()> {
     // usr /////////////////////////////////////
@@ -71,21 +86,14 @@ async fn main() -> io::Result<()> {
     // check if values are empty & print if not ///////////////////////////////////////////
     write!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), String::from_utf8_lossy(&usr.stdout)).unwrap();
     let sh = String::from_utf8_lossy(&shell.stdout);
-    if sh != "\n" {
-        write!(handle, "   {} ~ {}", "Shell".purple(), sh).unwrap();
-    }
-    if pkg != 0 {
+    write_to_handle_if_not_empty!(handle, "Shell", sh);
+    if pkg != 0 { // odd one out; too lazy to properly implement this lol
         writeln!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg, arch).unwrap();
-    } else if !arch.is_empty() {
-        writeln!(handle, "   {} ~ {}", "Arch".purple(), arch).unwrap();
+    } else {
+        writeln_to_handle_if_not_empty!(handle, "Arch", arch);
     }
-    if !distro.is_empty() {
-        write!(handle, "   {} ~ {}", "Distro".purple(), distro).unwrap();
-    }
-    let de = String::from_utf8_lossy(&desktop.stdout);
-    if de != "\n" {
-        write!(handle, "   {} ~ {}", "Desktop".purple(), de).unwrap();
-    }
+    write_to_handle_if_not_empty!(handle, "Distro", distro);
+    write_to_handle_if_not_empty!(handle, "Desktop", String::from_utf8_lossy(&desktop.stdout));
     ///////////////////////////////////////////////////////////////////////////////////////
     drop(handle);
 Ok(())
