@@ -15,7 +15,7 @@ macro_rules! writeln_to_handle_if_not_empty {
 
 macro_rules! get_env_var {
     ($var:expr) => {
-        std::env::var($var).unwrap()
+        std::env::var($var).unwrap_or_else(|_| String::from("\n"))
     }
 }
 
