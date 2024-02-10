@@ -64,12 +64,8 @@ async fn main() -> io::Result<()> {
         packages::get_num_packages()
     });
 
-    let arch_thread = spawn(async {
-        std::env::consts::ARCH
-    });
-
     // join! to await all `futures` types concurrently
-    let (usr, distro, shell, desktop, pkg, arch) = join!(name_thread, distro_thread, shell_thread, desktop_thread, packages_thread, arch_thread);
+    let (usr, distro, shell, desktop, pkg) = join!(name_thread, distro_thread, shell_thread, desktop_thread, packages_thread);
 
     // and then .unwrap the results. pray that none of them contain an `Err` type & panic! the app
     // that'd be bad lol
@@ -78,7 +74,7 @@ async fn main() -> io::Result<()> {
     let shell = shell.unwrap();
     let desktop = desktop.unwrap();
     let pkg = pkg.unwrap();
-    let arch = arch.unwrap();
+    let arch = std::env::consts::ARCH;
 
     let mut handle = io::stdout().lock(); // lock stdout for slightly faster writing
     // the actual printing
