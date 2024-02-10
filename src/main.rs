@@ -2,6 +2,7 @@
 use std::{io::{self, Write}, process::Command};
 use colored::Colorize;
 use tokio::task::spawn;
+use tokio::join;
 
 pub mod packages;
 
@@ -65,15 +66,18 @@ async fn main() -> io::Result<()> {
     let arch_thread = spawn(async {
         std::env::consts::ARCH
     });
-    
-    // Get data from threads
-    // TODO: make collection not blocking other tasks somehow, but do block the actual printing part
-    let usr = name_thread.await.unwrap();
-    let distro = distro_thread.await.unwrap();
-    let shell = shell_thread.await.unwrap();
-    let desktop = desktop_thread.await.unwrap();
-    let pkg = packages_thread.await.unwrap();
-    let arch = arch_thread.await.unwrap();
+
+    // join! to await all `futures` types concurrently
+    let (usr, distro, shell, desktop, pkg, arch) = join!(name_thread, distro_thread, shell_thread, desktop_thread, packages_thread, arch_thread);
+
+    // and then .unwrap the results. pray that none of them contain an `Err` type & panic! the app
+    // that'd be bad lol
+    let usr = usr.unwrap();
+    let distro = distro.unwrap();
+    let shell = shell.unwrap();
+    let desktop = desktop.unwrap();
+    let pkg = pkg.unwrap();
+    let arch = arch.unwrap();
 
     let mut handle = io::stdout().lock(); // lock stdout for slightly faster writing
     // the actual printing
