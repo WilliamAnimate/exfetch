@@ -1,17 +1,10 @@
 #![allow(unused_must_use)]
-use std::{io::{self, Write, BufRead}, fs::File, process::Command};
+use std::{io::{self, Write, BufRead}, fs::File};
 use colored::Colorize;
 use tokio::{task::spawn, join};
 
 pub mod packages;
 
-macro_rules! write_to_handle_if_not_empty {
-    ($handle:expr, $entry:expr, $value:expr) => {
-        if $value != "\n" || $value.is_empty() {
-            write!($handle, "   {} ~ {}", $entry.purple(), $value);
-        }
-    }
-}
 macro_rules! writeln_to_handle_if_not_empty {
     ($handle:expr, $entry:expr, $value:expr) => {
         if $value != "\n" || $value.is_empty() {
@@ -20,13 +13,16 @@ macro_rules! writeln_to_handle_if_not_empty {
     }
 }
 
+macro_rules! get_env_var {
+    ($var:expr) => {
+        std::env::var($var).unwrap()
+    }
+}
+
 #[tokio::main]
 async fn main() -> io::Result<()> {
     let name_thread = spawn(async {
-        Command::new("sh")
-            .args(["-c", "echo $USER"])
-            .output()
-            .expect("Can't fetch your username")
+        get_env_var!("USER")
     });
 
     let distro_thread = spawn(async {
@@ -47,17 +43,11 @@ async fn main() -> io::Result<()> {
     });
 
     let desktop_thread = spawn(async {
-        Command::new("sh")
-            .args(["-c", "echo $XDG_SESSION_DESKTOP"])
-            .output()
-            .expect("Can't fetch your desktop")
+        get_env_var!("XDG_SESSION_DESKTOP")
     });
 
     let shell_thread = spawn(async {
-        Command::new("sh")
-            .args(["-c", "echo $SHELL"])
-            .output()
-            .expect("Can't fetch your shell")
+        get_env_var!("SHELL")
     });
 
     let packages_thread = spawn(async {
@@ -78,15 +68,15 @@ async fn main() -> io::Result<()> {
 
     let mut handle = io::stdout().lock(); // lock stdout for slightly faster writing
     // the actual printing
-    write!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), String::from_utf8_lossy(&usr.stdout)).unwrap();
-    write_to_handle_if_not_empty!(handle, "Shell", String::from_utf8_lossy(&shell.stdout));
+    writeln!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), usr).unwrap();
+    writeln_to_handle_if_not_empty!(handle, "Shell", shell);
     if pkg != 0 { // odd one out; too lazy to properly implement this lol
         writeln!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg, arch).unwrap();
     } else {
         writeln_to_handle_if_not_empty!(handle, "Arch", arch);
     }
     writeln_to_handle_if_not_empty!(handle, "Distro", distro);
-    write_to_handle_if_not_empty!(handle, "Desktop", String::from_utf8_lossy(&desktop.stdout));
+    writeln_to_handle_if_not_empty!(handle, "Desktop", desktop);
 
     drop(handle);
     Ok(())
