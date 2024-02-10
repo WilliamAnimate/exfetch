@@ -23,8 +23,13 @@ jobs:
       run: rustup component add rust-src --toolchain nightly-x86_64-unknown-linux-gnu
     - name: Compiling xFetch
       run: RUSTFLAGS="-Zlocation-detail=none" cargo build --target x86_64-unknown-linux-gnu --profile optimized-build -Z build-std=std,panic_abort -Z build-std-features=panic_immediate_abort
-    - name: Running Tests
-      run: cargo test --verbose
+    # literally ZERO tests are actually run. uncomment this when we actually do have tests.
+    #- name: Running Tests
+    #  run: cargo test --verbose
+    - name: xFetch Check!
+      run: ./target/x86_64-unknown-linux-gnu/optimized-build/xfetch
+    - name: timed xFetch Check!
+      run: time ./target/x86_64-unknown-linux-gnu/optimized-build/xfetch
     - name: Artifact
       uses: actions/upload-artifact@v4
       with:
