@@ -1,8 +1,7 @@
 #![allow(unused_must_use)]
-use std::{io::{self, Write}, process::Command};
+use std::{io::{self, Write, BufRead}, fs::File, process::Command};
 use colored::Colorize;
-use tokio::task::spawn;
-use tokio::join;
+use tokio::{task::spawn, join};
 
 pub mod packages;
 
@@ -31,18 +30,20 @@ async fn main() -> io::Result<()> {
     });
 
     let distro_thread = spawn(async {
-        let distro_raw = Command::new("sh")
-            .args(["-c", "cat /etc/os-release | grep PRETTY_NAME"])
-            .output()
-            .expect("Can't fetch your distro");
+        let file = File::open("/etc/os-release").expect("can't open /etc/os-release");
+        let mut reader = io::BufReader::new(file);
+        let mut line = String::new();
+        let mut pretty_name = String::new();
 
-        let distro_output = String::from_utf8(distro_raw.stdout).unwrap();
-        let distro_parts: Vec<&str> = distro_output.split("=").collect();
-        if let Some(_) = distro_parts.get(1) {
-            distro_parts[1].replace("\"", "")
-        } else {
-            String::new() // an empty string
+        while reader.read_line(&mut line).expect("failed to read line") > 0 {
+            if line.starts_with("PRETTY_NAME=") {
+                pretty_name = line.splitn(2, '=').nth(1).unwrap().to_string();
+                pretty_name = pretty_name.trim().trim_matches('"').to_string();
+                break;
+            }
+            line.clear();
         }
+        pretty_name
     });
 
     let desktop_thread = spawn(async {
@@ -88,7 +89,7 @@ async fn main() -> io::Result<()> {
     } else {
         writeln_to_handle_if_not_empty!(handle, "Arch", arch);
     }
-    write_to_handle_if_not_empty!(handle, "Distro", distro);
+    writeln_to_handle_if_not_empty!(handle, "Distro", distro);
     write_to_handle_if_not_empty!(handle, "Desktop", String::from_utf8_lossy(&desktop.stdout));
 
     drop(handle);
