@@ -6,6 +6,7 @@ edition = "2021"
 [dependencies]
 colored = "2.1.0"
 tokio = { git = "https://github.com/tokio-rs/tokio", features = ["macros", "rt-multi-thread"] }
+uptime_lib = "0.3.0"
 
 [profile.release]
 opt-level = 'z'

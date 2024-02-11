@@ -54,8 +54,23 @@ async fn main() -> io::Result<()> {
         packages::get_num_packages()
     });
 
+    let uptime_thread = spawn(async {
+        match uptime_lib::get() {
+            Ok(uptime) => {
+                let raw = uptime.as_secs_f32() as i32;
+                // ceci code est tres beau
+                return String::from(format!("Uptime: {} days, {} hours, {} minutes, {} seconds",
+                 raw / (60 * 60 * 24),
+                (raw / (60 * 60)) % 24,
+                (raw / 60) % 60,
+                 raw % 60));
+            }
+            Err(_) => return String::new(),
+        };
+    });
+
     // join! to await all `futures` types concurrently
-    let (usr, distro, shell, desktop, pkg) = join!(name_thread, distro_thread, shell_thread, desktop_thread, packages_thread);
+    let (usr, distro, shell, desktop, pkg, uptime) = join!(name_thread, distro_thread, shell_thread, desktop_thread, packages_thread, uptime_thread);
 
     // and then .unwrap the results. pray that none of them contain an `Err` type & panic! the app
     // that'd be bad lol
@@ -64,6 +79,7 @@ async fn main() -> io::Result<()> {
     let shell = shell.unwrap();
     let desktop = desktop.unwrap();
     let pkg = pkg.unwrap();
+    let uptime = uptime.unwrap();
     let arch = std::env::consts::ARCH;
 
     let mut handle = io::stdout().lock(); // lock stdout for slightly faster writing
@@ -75,6 +91,7 @@ async fn main() -> io::Result<()> {
     } else {
         writeln_to_handle_if_not_empty!(handle, "Arch", arch);
     }
+    writeln_to_handle_if_not_empty!(handle, "Uptime", uptime);
     writeln_to_handle_if_not_empty!(handle, "Distro", distro);
     writeln_to_handle_if_not_empty!(handle, "Desktop", desktop);
 
