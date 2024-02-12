@@ -7,16 +7,16 @@ pub mod packages;
 
 macro_rules! writeln_to_handle_if_not_empty {
     ($handle:expr, $entry:expr, $value:expr) => {
-        if $value != "\n" || $value.is_empty() {
+        if !$value.is_empty() {
             writeln!($handle, "   {} ~ {}", $entry.purple(), $value);
         }
-    }
+    };
 }
 
 macro_rules! get_env_var {
     ($var:expr) => {
-        std::env::var($var).unwrap_or_else(|_| String::from("\n"))
-    }
+        std::env::var($var).unwrap_or_else(|_| String::new())
+    };
 }
 
 #[tokio::main]
@@ -26,12 +26,12 @@ async fn main() -> io::Result<()> {
     });
 
     let distro_thread = spawn(async {
-        let file = File::open("/etc/os-release").expect("can't open /etc/os-release");
+        let file = File::open("/etc/os-release").expect("Can't open /etc/os-release!");
         let mut reader = io::BufReader::new(file);
         let mut line = String::new();
         let mut pretty_name = String::new();
 
-        while reader.read_line(&mut line).expect("failed to read line") > 0 {
+        while reader.read_line(&mut line).expect("Failed to read line") > 0 {
             if line.starts_with("PRETTY_NAME=") {
                 pretty_name = line.splitn(2, '=').nth(1).unwrap().to_string();
                 pretty_name = pretty_name.trim().trim_matches('"').to_string();
@@ -58,19 +58,25 @@ async fn main() -> io::Result<()> {
         match uptime_lib::get() {
             Ok(uptime) => {
                 let raw = uptime.as_secs_f32() as i32;
-                // ceci code est tres beau
-                return String::from(format!("{}d, {}h, {}m, {}s",
-                 raw / (60 * 60 * 24),
-                (raw / (60 * 60)) % 24,
-                (raw / 60) % 60,
-                 raw % 60));
+                let formatted_uptime = format!("{}d {}h {}m",
+                                                raw / (60 * 60 * 24),
+                                                (raw / (60 * 60)) % 24,
+                                                (raw / 60) % 60);
+                formatted_uptime
             }
-            Err(_) => return String::from("\n"),
-        };
+            Err(_) => String::new(),
+        }
     });
 
     // join! to await all `futures` types concurrently
-    let (usr, distro, shell, desktop, pkg, uptime) = join!(name_thread, distro_thread, shell_thread, desktop_thread, packages_thread, uptime_thread);
+    let (usr, distro, shell, desktop, pkg, uptime) = join!(
+        name_thread,
+        distro_thread,
+        shell_thread,
+        desktop_thread,
+        packages_thread,
+        uptime_thread
+    );
 
     // and then .unwrap the results. pray that none of them contain an `Err` type & panic! the app
     // that'd be bad lol

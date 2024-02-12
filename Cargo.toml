@@ -6,7 +6,7 @@ edition = "2021"
 [dependencies]
 colored = "2.1.0"
 tokio = { version = "1.36.0", features = ["macros", "rt-multi-thread"] }
-uptime_lib = "0.3.0"
+uptime_lib = { git = "https://github.com/XandrCopyrighted/uptime-rs" }
 
 [profile.release]
 opt-level = 'z'
