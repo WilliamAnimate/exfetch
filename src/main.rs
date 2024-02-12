@@ -64,7 +64,7 @@ async fn main() -> io::Result<()> {
                                                 (raw / 60) % 60);
                 formatted_uptime
             }
-            Err(_) => String::new(),
+            Err(_) => return String::from("\n"),
         }
     });
 
