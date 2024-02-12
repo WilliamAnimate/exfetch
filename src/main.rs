@@ -59,7 +59,7 @@ async fn main() -> io::Result<()> {
             Ok(uptime) => {
                 let raw = uptime.as_secs_f32() as i32;
                 // ceci code est tres beau
-                return String::from(format!("Uptime: {} days, {} hours, {} minutes, {} seconds",
+                return String::from(format!("{}d, {}h, {}m, {}s",
                  raw / (60 * 60 * 24),
                 (raw / (60 * 60)) % 24,
                 (raw / 60) % 60,
