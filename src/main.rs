@@ -65,7 +65,7 @@ async fn main() -> io::Result<()> {
                 (raw / 60) % 60,
                  raw % 60));
             }
-            Err(_) => return String::new(),
+            Err(_) => return String::from("\n"),
         };
     });
 
