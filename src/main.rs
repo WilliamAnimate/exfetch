@@ -2,13 +2,12 @@
 use std::{io::{self, Write, BufRead}, fs::File};
 use colored::Colorize;
 use tokio::{task::spawn, join};
-// remove me
 
 pub mod packages;
 
 macro_rules! writeln_to_handle_if_not_empty {
     ($handle:expr, $entry:expr, $value:expr) => {
-        if $value != "\n" || !$value.is_empty() {
+        if !$value.is_empty() {
             writeln!($handle, "   {} ~ {}", $entry.purple(), $value);
         }
     };
@@ -16,7 +15,7 @@ macro_rules! writeln_to_handle_if_not_empty {
 
 macro_rules! get_env_var {
     ($var:expr) => {
-        std::env::var($var).unwrap_or_else(|_| String::from("\n"))
+        std::env::var($var).unwrap_or_else(|_| String::new())
     };
 }
 
@@ -65,7 +64,7 @@ async fn main() -> io::Result<()> {
                                                 (raw / 60) % 60);
                 formatted_uptime
             }
-            Err(_) => return String::from("\n"),
+            Err(_) => String::new(),
         }
     });
 
