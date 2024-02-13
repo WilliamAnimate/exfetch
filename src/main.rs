@@ -7,7 +7,7 @@ pub mod packages;
 
 macro_rules! writeln_to_handle_if_not_empty {
     ($handle:expr, $entry:expr, $value:expr) => {
-        if !$value.is_empty() {
+        if $value != "\n" || !$value.is_empty() {
             writeln!($handle, "   {} ~ {}", $entry.purple(), $value);
         }
     };
@@ -15,7 +15,7 @@ macro_rules! writeln_to_handle_if_not_empty {
 
 macro_rules! get_env_var {
     ($var:expr) => {
-        std::env::var($var).unwrap_or_else(|_| String::new())
+        std::env::var($var).unwrap_or_else(|_| String::from("\n"))
     };
 }
 
