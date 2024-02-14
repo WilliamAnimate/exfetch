@@ -28,8 +28,7 @@ async fn main() -> io::Result<()> {
     let distro_thread = spawn(async {
         let file = File::open("/etc/os-release").expect("Can't open /etc/os-release!");
         let mut reader = io::BufReader::new(file);
-        let mut line = String::new();
-        let mut pretty_name = String::new();
+        let (mut line, mut pretty_name) = (String::new(), String::new());
 
         while reader.read_line(&mut line).expect("Failed to read line") > 0 {
             if line.starts_with("PRETTY_NAME=") {
