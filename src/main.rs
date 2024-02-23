@@ -5,10 +5,16 @@ use tokio::{task::spawn, join};
 
 pub mod packages;
 
+// static MAX_TERM_SIZE: u8 = 69;
+
 macro_rules! writeln_to_handle_if_not_empty {
-    ($handle:expr, $entry:expr, $value:expr) => {
+    ($handle:expr, $entry:expr, $value:expr, $terminal_width:expr) => {
+        // use std::fmt::Write;
         if !$value.is_empty() {
-            writeln!($handle, "   {} ~ {}", $entry.purple(), $value);
+            // writeln!($handle, "│ {} ~ {}", $entry.purple(), $value);
+            let to_write = format!("│ {} ~ {}", $entry.purple(), $value);
+            let padding = to_write.len();
+            writeln!($handle, "{}", format!("{}{} │", to_write, "".repeat(padding)));
         }
     };
 }
@@ -17,6 +23,24 @@ macro_rules! get_env_var {
     ($var:expr) => {
         std::env::var($var).unwrap_or_else(|_| String::new())
     };
+}
+
+/// returns the length as an i32; designed to make the code more concise.
+macro_rules! getlen {
+    ($to_find:expr) => {
+        $to_find.len() as i16
+    }
+}
+
+fn return_super_fancy_column_stuff(text: &str, times: i16) -> String {
+    let padding = "─".repeat(1);
+    let trailing = "─".repeat(((times + 7) - text.len() as i16).try_into().unwrap());
+    return format!("╭{}{}{}╮", padding, text, trailing);
+}
+
+fn return_super_fancy_column_closure_stuff(times: i16) -> String {
+    let lines = "─".repeat(((times + 7 + 1 /* 1 for padding. this code is so stupid. */)).try_into().unwrap());
+    return format!("╰{}╯", lines);
 }
 
 #[tokio::main]
@@ -74,7 +98,7 @@ async fn main() -> io::Result<()> {
         shell_thread,
         desktop_thread,
         packages_thread,
-        uptime_thread
+        uptime_thread,
     );
 
     // and then .unwrap the results. pray that none of them contain an `Err` type & panic! the app
@@ -87,19 +111,54 @@ async fn main() -> io::Result<()> {
     let uptime = uptime.unwrap();
     let arch = std::env::consts::ARCH;
 
+    // routine description: adds a value to a vec!
+    // for the routine below.
+    let mut array: Vec<i16> = Vec::new(); // array lel
+    array.extend([getlen!(usr), getlen!(distro), getlen!(shell), getlen!(desktop), getlen!(uptime), getlen!(arch)]);
+    dbg!(&array);
+
+    // routine description:
+    // finds the biggest number in a vec!
+    // this is important because we don't want the fancy af box to go to the edge of the screen.
+    // FIXME: mut. this is easy to fix but i want to make someone mad.
+    let mut box_width = get_max_value_of_vec(array);
+    dbg!(&box_width);
+    // HACK ALERT: the longest field is "desktop", so we add how long desktop is (7 chars.)
+    // this is hardcoded. good luck maintaining :3
+    box_width = box_width + 7;
+
     let mut handle = io::stdout().lock(); // lock stdout for slightly faster writing
     // the actual printing
-    writeln!(handle, "{}{} - {}", "x".red().bold(), "Fetch".cyan(), usr).unwrap();
-    writeln_to_handle_if_not_empty!(handle, "Shell", shell);
-    if pkg != 0 { // odd one out; too lazy to properly implement this lol
-        writeln!(handle, "   {} ~ {}, {}", "PKGs".purple(), pkg, arch).unwrap();
+    writeln!(handle, "{}{} - {}", "ex".red().bold(), "Fetch".cyan(), usr).unwrap();
+    /*
+╭───────┬─────────╮
+│ Name  ┆ NonFree │
+╞═══════╪═════════╡
+│ r8168 ┆ false   │
+╰───────┴─────────╯
+*/
+    writeln!(handle, "{}", return_super_fancy_column_stuff("HARDWARE", box_width));
+    writeln_to_handle_if_not_empty!(handle, "Uptime", uptime, &terminal_width);
+    writeln!(handle, "{}", return_super_fancy_column_closure_stuff(box_width));
+    writeln!(handle, "{}", return_super_fancy_column_stuff("SOFTWARE", box_width));
+    writeln_to_handle_if_not_empty!(handle, "Shell", shell, &terminal_width);
+    if pkg != 0 {
+        writeln!(handle, "│ {} ~ {}, {}", "PKGs".purple(), pkg, arch).unwrap();
     } else {
-        writeln_to_handle_if_not_empty!(handle, "Arch", arch);
+        writeln_to_handle_if_not_empty!(handle, "Arch", arch, &terminal_width);
     }
-    writeln_to_handle_if_not_empty!(handle, "Uptime", uptime);
-    writeln_to_handle_if_not_empty!(handle, "Distro", distro);
-    writeln_to_handle_if_not_empty!(handle, "Desktop", desktop);
+    writeln_to_handle_if_not_empty!(handle, "Distro", distro, &terminal_width);
+    writeln_to_handle_if_not_empty!(handle, "Desktop", desktop, &terminal_width);
+    writeln!(handle, "{}", return_super_fancy_column_closure_stuff(box_width));
 
     drop(handle);
     Ok(())
+}
+
+// this isn't java why is the function name so long
+fn get_max_value_of_vec(vec: Vec<i16>) -> i16 {
+    match vec.iter().max() {
+        Some(max) => *max,
+        None => panic!("the entire vector is empty, wtf?"),
+    }
 }
