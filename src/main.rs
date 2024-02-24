@@ -37,14 +37,14 @@ macro_rules! getlen {
 }
 
 fn return_super_fancy_column_stuff(text: &str, times: i16) -> String {
-    let padding = "─".repeat(1);
+    let padding = "─";
     let trailing = "─".repeat(((times + 7) - text.len() as i16).try_into().unwrap());
-    return format!("╭{}{}{}╮", padding, text, trailing);
+    format!("╭{}{}{}╮", padding, text, trailing)
 }
 
 fn return_super_fancy_column_closure_stuff(times: i16) -> String {
-    let lines = "─".repeat(((times + 8)).try_into().unwrap());
-    return format!("╰{}╯", lines);
+    let lines = "─".repeat((times + 8).try_into().unwrap());
+    format!("╰{}╯", lines)
 }
 
 #[tokio::main]
@@ -60,7 +60,7 @@ async fn main() -> io::Result<()> {
 
         while reader.read_line(&mut line).expect("Failed to read line") > 0 {
             if line.starts_with("PRETTY_NAME=") {
-                pretty_name = line.splitn(2, '=').nth(1).unwrap().to_string();
+                pretty_name = line.split_once('=').unwrap().1.to_string();
                 pretty_name = pretty_name.trim().trim_matches('"').to_string();
                 break;
             }
