@@ -3,6 +3,9 @@ use std::{io::{self, Write, BufRead}, fs::File};
 use colored::Colorize;
 use tokio::{task::spawn, join};
 
+#[cfg(windows)] use winreg::enums::*;
+#[cfg(windows)] use winreg::RegKey;
+
 pub mod packages;
 
 macro_rules! writeln_to_handle_if_not_empty {
@@ -70,6 +73,14 @@ async fn main() -> io::Result<()> {
     });
 
     let cpu_name_thread = spawn(async {
+        #[cfg(windows)] {
+            let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+            let subkey = hklm.open_subkey_with_flags(r#"HARDWARE\DESCRIPTION\System\CentralProcessor\0"#, KEY_READ).unwrap();
+            let cpu_name = subkey.get_value("ProcessorNameString").unwrap();
+
+            dbg!(&cpu_name);
+            panic!("debug panic to see model name");
+        }
         // TODO: fix indentation hell
         if let Ok(cpuinfo) = std::fs::read_to_string("/proc/cpuinfo") {
             for line in cpuinfo.lines() {
