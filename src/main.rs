@@ -9,13 +9,20 @@ pub mod packages;
 
 macro_rules! writeln_to_handle_if_not_empty {
     ($handle:expr, $entry:expr, $value:expr, $terminal_width:expr) => {
-        // use std::fmt::Write;
         if !$value.is_empty() {
-            // writeln!($handle, "│ {} ~ {}", $entry.purple(), $value);
-            let to_write = format!("│ {} ~ {}", $entry.purple(), $value);
-            let padding = to_write.len();
-            writeln!($handle, "{}", format!("{}{} │", to_write, "".repeat(padding)));
+            __writeln_to_handle!($handle, $entry, $value, $terminal_width);
         }
+    };
+}
+
+/// idk
+macro_rules! __writeln_to_handle {
+    ($handle:expr, $entry:expr, $value:expr, $terminal_width:expr) => {
+        // use std::fmt::Write;
+        let to_write = format!("│ {} ~ {}", $entry.purple(), $value);
+        let padding = $terminal_width as usize - ($entry.len() + $value.len()) + 3;
+        // dbg!(&padding);
+        writeln!($handle, "{}", format!("{}{} │", to_write, " ".repeat(padding)));
     };
 }
 
@@ -115,14 +122,13 @@ async fn main() -> io::Result<()> {
     // for the routine below.
     let mut array: Vec<i16> = Vec::new(); // array lel
     array.extend([getlen!(usr), getlen!(distro), getlen!(shell), getlen!(desktop), getlen!(uptime), getlen!(arch)]);
-    dbg!(&array);
 
     // routine description:
     // finds the biggest number in a vec!
     // this is important because we don't want the fancy af box to go to the edge of the screen.
     // FIXME: mut. this is easy to fix but i want to make someone mad.
     let mut box_width = get_max_value_of_vec(array);
-    dbg!(&box_width);
+    // dbg!(&box_width);
     // HACK ALERT: the longest field is "desktop", so we add how long desktop is (7 chars.)
     // this is hardcoded. good luck maintaining :3
     box_width = box_width + 7;
@@ -138,17 +144,17 @@ async fn main() -> io::Result<()> {
 ╰───────┴─────────╯
 */
     writeln!(handle, "{}", return_super_fancy_column_stuff("HARDWARE", box_width));
-    writeln_to_handle_if_not_empty!(handle, "Uptime", uptime, &terminal_width);
+    writeln_to_handle_if_not_empty!(handle, "Uptime", uptime, box_width);
     writeln!(handle, "{}", return_super_fancy_column_closure_stuff(box_width));
     writeln!(handle, "{}", return_super_fancy_column_stuff("SOFTWARE", box_width));
-    writeln_to_handle_if_not_empty!(handle, "Shell", shell, &terminal_width);
+    writeln_to_handle_if_not_empty!(handle, "Shell", shell, box_width);
     if pkg != 0 {
-        writeln!(handle, "│ {} ~ {}, {}", "PKGs".purple(), pkg, arch).unwrap();
+        writeln_to_handle_if_not_empty!(handle, "PKGs", format!("{}, {}", pkg, arch), box_width);
     } else {
-        writeln_to_handle_if_not_empty!(handle, "Arch", arch, &terminal_width);
+        writeln_to_handle_if_not_empty!(handle, "Arch", arch, box_width);
     }
-    writeln_to_handle_if_not_empty!(handle, "Distro", distro, &terminal_width);
-    writeln_to_handle_if_not_empty!(handle, "Desktop", desktop, &terminal_width);
+    writeln_to_handle_if_not_empty!(handle, "Distro", distro, box_width);
+    writeln_to_handle_if_not_empty!(handle, "Desktop", desktop, box_width);
     writeln!(handle, "{}", return_super_fancy_column_closure_stuff(box_width));
 
     drop(handle);
