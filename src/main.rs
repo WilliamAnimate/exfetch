@@ -17,7 +17,7 @@ macro_rules! writeln_to_handle {
     ($handle:expr, $entry:expr, $value:expr, $terminal_width:expr) => {
         // use std::fmt::Write;
         let to_write = format!("│ {} ~ {}", $entry.purple(), $value);
-        let padding = $terminal_width as usize - ($entry.len() + $value.len()) + 3;
+        let padding = $terminal_width as usize + 3 - ($entry.len() + $value.len());
         // dbg!(&padding);
         writeln!($handle, "{}", format!("{}{} │", to_write, " ".repeat(padding)));
     };
@@ -159,7 +159,7 @@ async fn main() -> io::Result<()> {
 
     // and then finds the biggest number in a vec!
     // this is important because we don't want the fancy af box to go to the edge of the screen.
-    let box_width = get_max_value_of_vec(array) + 7;
+    let box_width = get_max_value_of_vec(array);
     // HACK ALERT: the longest field is "desktop", so we add how long desktop is (7 chars.)
     // this is hardcoded. good luck maintaining :3
 
