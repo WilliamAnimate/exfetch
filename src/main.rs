@@ -69,6 +69,27 @@ async fn main() -> io::Result<()> {
         pretty_name
     });
 
+    let cpu_name_thread = spawn(async {
+        // TODO: fix indentation hell
+        if let Ok(cpuinfo) = std::fs::read_to_string("/proc/cpuinfo") {
+            for line in cpuinfo.lines() {
+                if line.starts_with("model name") {
+                    let parts: Vec<&str> = line.split(":").collect();
+                    if parts.len() > 1 {
+                        let cpu_name = parts[1].trim();
+                        // let cpu_name = "Intel(R) Core(TM) i3-1005G1 CPU @ 1.20GHz"; // thanks xander
+                        // let cpu_name = "AMD EPYC 7B13"; // thanks xander
+
+                        // this works for my own intel i7 cpu
+                        let debloated_name = cpu_name.replace("(R)", "").replace("(TM)", "").replace(" @ ", "(").replace("CPU", "").replace("GHz", "GHz)").replace("(", "(").replace(") ", ")");
+                        return debloated_name;
+                    }
+                }
+            }
+        }
+        String::new() // can't read /proc/cpuinfo, return an empty string.
+    });
+
     let desktop_thread = spawn(async {
         get_env_var!("XDG_SESSION_DESKTOP")
     });
@@ -111,10 +132,11 @@ async fn main() -> io::Result<()> {
     });
 
     // join! to await all `futures` types concurrently
-    let (usr, distro, shell, desktop, pkg, uptime) = join!(
+    let (usr, distro, shell, cpu_name, desktop, pkg, uptime) = join!(
         name_thread,
         distro_thread,
         shell_thread,
+        cpu_name_thread,
         desktop_thread,
         packages_thread,
         uptime_thread,
@@ -125,6 +147,7 @@ async fn main() -> io::Result<()> {
     let usr = usr.unwrap();
     let distro = distro.unwrap();
     let shell = shell.unwrap();
+    let cpu_name = cpu_name.unwrap();
     let desktop = desktop.unwrap();
     let pkg = pkg.unwrap();
     let uptime = uptime.unwrap();
@@ -132,7 +155,7 @@ async fn main() -> io::Result<()> {
 
     // adds a value to a vec!
     let mut array: Vec<i16> = Vec::new(); // array lel
-    array.extend([getlen!(usr), getlen!(distro), getlen!(shell), getlen!(desktop), getlen!(uptime), getlen!(arch)]);
+    array.extend([getlen!(usr), getlen!(distro), getlen!(shell), getlen!(cpu_name), getlen!(desktop), getlen!(uptime), getlen!(arch)]);
 
     // and then finds the biggest number in a vec!
     // this is important because we don't want the fancy af box to go to the edge of the screen.
@@ -151,6 +174,7 @@ async fn main() -> io::Result<()> {
 ╰───────┴─────────╯
 */
     writeln!(handle, "{}", return_super_fancy_column_stuff("HARDWARE", box_width));
+    writeln_to_handle_if_not_empty!(handle, "CPU", cpu_name, box_width); // should never be empty smh
     writeln_to_handle_if_not_empty!(handle, "Uptime", uptime, box_width);
     writeln!(handle, "{}", return_super_fancy_column_closure_stuff(box_width));
     writeln!(handle, "{}", return_super_fancy_column_stuff("SOFTWARE", box_width));
