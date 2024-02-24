@@ -5,18 +5,15 @@ use tokio::{task::spawn, join};
 
 pub mod packages;
 
-// static MAX_TERM_SIZE: u8 = 69;
-
 macro_rules! writeln_to_handle_if_not_empty {
     ($handle:expr, $entry:expr, $value:expr, $terminal_width:expr) => {
         if !$value.is_empty() {
-            __writeln_to_handle!($handle, $entry, $value, $terminal_width);
+            writeln_to_handle!($handle, $entry, $value, $terminal_width);
         }
     };
 }
 
-/// idk
-macro_rules! __writeln_to_handle {
+macro_rules! writeln_to_handle {
     ($handle:expr, $entry:expr, $value:expr, $terminal_width:expr) => {
         // use std::fmt::Write;
         let to_write = format!("│ {} ~ {}", $entry.purple(), $value);
@@ -46,7 +43,7 @@ fn return_super_fancy_column_stuff(text: &str, times: i16) -> String {
 }
 
 fn return_super_fancy_column_closure_stuff(times: i16) -> String {
-    let lines = "─".repeat(((times + 7 + 1 /* 1 for padding. this code is so stupid. */)).try_into().unwrap());
+    let lines = "─".repeat(((times + 8)).try_into().unwrap());
     return format!("╰{}╯", lines);
 }
 
@@ -133,20 +130,15 @@ async fn main() -> io::Result<()> {
     let uptime = uptime.unwrap();
     let arch = std::env::consts::ARCH;
 
-    // routine description: adds a value to a vec!
-    // for the routine below.
+    // adds a value to a vec!
     let mut array: Vec<i16> = Vec::new(); // array lel
     array.extend([getlen!(usr), getlen!(distro), getlen!(shell), getlen!(desktop), getlen!(uptime), getlen!(arch)]);
 
-    // routine description:
-    // finds the biggest number in a vec!
+    // and then finds the biggest number in a vec!
     // this is important because we don't want the fancy af box to go to the edge of the screen.
-    // FIXME: mut. this is easy to fix but i want to make someone mad.
-    let mut box_width = get_max_value_of_vec(array);
-    // dbg!(&box_width);
+    let box_width = get_max_value_of_vec(array) + 7;
     // HACK ALERT: the longest field is "desktop", so we add how long desktop is (7 chars.)
     // this is hardcoded. good luck maintaining :3
-    box_width = box_width + 7;
 
     let mut handle = io::stdout().lock(); // lock stdout for slightly faster writing
     // the actual printing
@@ -176,7 +168,6 @@ async fn main() -> io::Result<()> {
     Ok(())
 }
 
-// this isn't java why is the function name so long
 fn get_max_value_of_vec(vec: Vec<i16>) -> i16 {
     match vec.iter().max() {
         Some(max) => *max,
