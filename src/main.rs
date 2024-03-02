@@ -5,7 +5,10 @@ use tokio::{task::spawn, join};
 
 #[cfg(windows)] use winreg::enums::*;
 #[cfg(windows)] use winreg::RegKey;
-
+// #[cfg(windows)] use windows_sys::Win32::System::SystemInformation::OSVERSIONINFOW;
+// #[cfg(windows)] use windows_sys::Win32::System::SystemInformation::GetVersionExW;
+// #[cfg(windows)] use windows_sys::Win32::System::SystemInformation::GetVersionExA;
+//
 pub mod packages;
 
 macro_rules! writeln_to_handle_if_not_empty {
@@ -57,52 +60,71 @@ async fn main() -> io::Result<()> {
     });
 
     let distro_thread = spawn(async {
-        let file = File::open("/etc/os-release").expect("Can't open /etc/os-release!");
-        let mut reader = io::BufReader::new(file);
-        let (mut line, mut pretty_name) = (String::new(), String::new());
+        #[cfg(unix)] {
+            let file = File::open("/etc/os-release").expect("Can't open /etc/os-release!");
+            let mut reader = io::BufReader::new(file);
+            let (mut line, mut pretty_name) = (String::new(), String::new());
 
-        while reader.read_line(&mut line).expect("Failed to read line") > 0 {
-            if line.starts_with("PRETTY_NAME=") {
-                pretty_name = line.split_once('=').unwrap().1.to_string();
-                pretty_name = pretty_name.trim().trim_matches('"').to_string();
-                break;
+            while reader.read_line(&mut line).expect("Failed to read line") > 0 {
+                if line.starts_with("PRETTY_NAME=") {
+                    pretty_name = line.split_once('=').unwrap().1.to_string();
+                    pretty_name = pretty_name.trim().trim_matches('"').to_string();
+                    break;
+                }
+                line.clear();
             }
-            line.clear();
+            pretty_name
         }
-        pretty_name
+        #[cfg(windows)] {
+            let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+            let subkey = hklm.open_subkey_with_flags(r#"SOFTWARE\Microsoft\Windows NT\CurrentVersion"#, KEY_READ).unwrap();
+            let mut version: String = subkey.get_value("ProductName").unwrap();
+            let releaseid: String = subkey.get_value("ReleaseId").unwrap();
+
+            // remove pro/enterprise/home/etc from the version
+            version = version.replace(" Pro", "").replace(" Home", "").replace(" Enterprise", "");
+
+            format!("{}, Version {}", version, releaseid)
+        }
     });
 
     let cpu_name_thread = spawn(async {
-        #[cfg(windows)] {
-            let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-            let subkey = hklm.open_subkey_with_flags(r#"HARDWARE\DESCRIPTION\System\CentralProcessor\0"#, KEY_READ).unwrap();
-            let cpu_name = subkey.get_value("ProcessorNameString").unwrap();
+        #[cfg(unix)] {
+            // TODO: fix indentation hell
+            if let Ok(cpuinfo) = std::fs::read_to_string("/proc/cpuinfo") {
+                for line in cpuinfo.lines() {
+                    if line.starts_with("model name") {
+                        let parts: Vec<&str> = line.split(":").collect();
+                        if parts.len() > 1 {
+                            let cpu_name = parts[1].trim();
+                            // let cpu_name = "Intel(R) Core(TM) i3-1005G1 CPU @ 1.20GHz"; // thanks xander
+                            // let cpu_name = "AMD EPYC 7B13"; // thanks xander
 
-            dbg!(&cpu_name);
-            panic!("debug panic to see model name");
-        }
-        // TODO: fix indentation hell
-        if let Ok(cpuinfo) = std::fs::read_to_string("/proc/cpuinfo") {
-            for line in cpuinfo.lines() {
-                if line.starts_with("model name") {
-                    let parts: Vec<&str> = line.split(":").collect();
-                    if parts.len() > 1 {
-                        let cpu_name = parts[1].trim();
-                        // let cpu_name = "Intel(R) Core(TM) i3-1005G1 CPU @ 1.20GHz"; // thanks xander
-                        // let cpu_name = "AMD EPYC 7B13"; // thanks xander
-
-                        // this works for my own intel i7 cpu
-                        let debloated_name = cpu_name.replace("(R)", "").replace("(TM)", "").replace(" @ ", "(").replace("CPU", "").replace("GHz", "GHz)").replace("(", "(").replace(") ", ")");
-                        return debloated_name;
+                            // this works for my own intel i7 cpu
+                            let debloated_name = cpu_name.replace("(R)", "").replace("(TM)", "").replace(" @ ", "(").replace("CPU", "").replace("GHz", "GHz)").replace("(", "(").replace(") ", ")");
+                            return debloated_name;
+                        }
                     }
                 }
             }
+            String::new() // can't read /proc/cpuinfo, return an empty string.
         }
-        String::new() // can't read /proc/cpuinfo, return an empty string.
+        #[cfg(windows)] {
+            let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
+            let subkey = hklm.open_subkey_with_flags(r#"HARDWARE\DESCRIPTION\System\CentralProcessor\0"#, KEY_READ).unwrap();
+            let cpu_name: String = subkey.get_value("ProcessorNameString").unwrap();
+
+            cpu_name
+        }
     });
 
     let desktop_thread = spawn(async {
-        get_env_var!("XDG_SESSION_DESKTOP")
+        #[cfg(unix)] {
+            get_env_var!("XDG_SESSION_DESKTOP")
+        }
+        #[cfg(windows)] {
+            "Explorer"
+        }
     });
 
     let shell_thread = spawn(async {
