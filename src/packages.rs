@@ -18,6 +18,6 @@ pub fn get_num_packages() -> i16 {
     let directory = Path::new(PACMAN_DIR);
     match folders_in_dir(directory) {
         Ok(entries) => entries as i16,
-        Err(_) => return 0
+        Err(_) => 0
     }
 }

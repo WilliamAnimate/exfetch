@@ -74,15 +74,19 @@ async fn main() -> io::Result<()> {
         if let Ok(cpuinfo) = std::fs::read_to_string("/proc/cpuinfo") {
             for line in cpuinfo.lines() {
                 if line.starts_with("model name") {
-                    let parts: Vec<&str> = line.split(":").collect();
+                    let parts: Vec<&str> = line.split(':').collect();
                     if parts.len() > 1 {
                         let cpu_name = parts[1].trim();
                         // let cpu_name = "Intel(R) Core(TM) i3-1005G1 CPU @ 1.20GHz"; // thanks xander
                         // let cpu_name = "AMD EPYC 7B13"; // thanks xander
 
                         // this works for my own intel i7 cpu
-                        let debloated_name = cpu_name.replace("(R)", "").replace("(TM)", "").replace(" @ ", "(").replace("CPU", "").replace("GHz", "GHz)").replace("(", "(").replace(") ", ")");
-                        return debloated_name;
+                        return cpu_name.replace("(R)", "")
+                            .replace("(TM)", "")
+                            .replace(" @ ", "(")
+                            .replace("CPU", "")
+                            .replace("GHz", "GHz)")
+                            .replace(") ", ")");
                     }
                 }
             }
@@ -155,7 +159,15 @@ async fn main() -> io::Result<()> {
 
     // adds a value to a vec!
     let mut array: Vec<i16> = Vec::new(); // array lel
-    array.extend([getlen!(usr), getlen!(distro), getlen!(shell), getlen!(cpu_name), getlen!(desktop), getlen!(uptime), getlen!(arch)]);
+    array.extend([
+         getlen!(usr),
+         getlen!(distro),
+         getlen!(shell),
+         getlen!(cpu_name),
+         getlen!(desktop),
+         getlen!(uptime),
+         getlen!(arch)
+    ]);
 
     // and then finds the biggest number in a vec!
     // this is important because we don't want the fancy af box to go to the edge of the screen.
@@ -164,15 +176,8 @@ async fn main() -> io::Result<()> {
     // this is hardcoded. good luck maintaining :3
 
     let mut handle = io::stdout().lock(); // lock stdout for slightly faster writing
-    // the actual printing
     writeln!(handle, "{}{} - {}", "ex".red().bold(), "Fetch".cyan(), usr).unwrap();
-    /*
-╭───────┬─────────╮
-│ Name  ┆ NonFree │
-╞═══════╪═════════╡
-│ r8168 ┆ false   │
-╰───────┴─────────╯
-*/
+
     writeln!(handle, "{}", return_super_fancy_column_stuff("HARDWARE", box_width));
     writeln_to_handle_if_not_empty!(handle, "CPU", cpu_name, box_width); // should never be empty smh
     writeln_to_handle_if_not_empty!(handle, "Uptime", uptime, box_width);
