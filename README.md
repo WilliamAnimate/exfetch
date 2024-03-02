@@ -1,6 +1,6 @@
 # exFetch
 
-A fork of [xFetch](https://github.com/xandrcopyrighted/xfetch) designed to look as good as possible.
+A fork of [xFetch](https://codeberg.org/XDR/xFetch) designed to look as good as possible.
 
 ## y
 
@@ -12,4 +12,4 @@ At some point I hope to make this multi-platform.
 
 ## Attribution
 
-original by XandrCopyrighted, at https://github.com/xandrcopyrighted/xfetch
+original by XandrCopyrighted, at https://codeberg.org/XDR/xFetch
