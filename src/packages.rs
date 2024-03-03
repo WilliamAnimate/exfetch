@@ -1,10 +1,23 @@
-use std::{fs::read_dir, path::Path};
+use std::path::Path;
 
 const PACMAN_DIR: &str = "/var/lib/pacman/local";
 
+fn folders_in_dir(dir: &Path) -> std::io::Result<usize> {
+    let mut count = 0;
+    if let Ok(entries) = std::fs::read_dir(dir) {
+        for entry in entries.flatten() {
+            if entry.metadata()?.is_dir() {
+                count += 1;
+            }
+        }
+    }
+    Ok(count)
+}
+
 pub fn get_num_packages() -> i16 {
-    match read_dir(Path::new(PACMAN_DIR)) {
-        Ok(entries) => entries.count() as i16 - 1, // -1 because there is an ALPM_DB_VERSION file at that dir
+    let directory = Path::new(PACMAN_DIR);
+    match folders_in_dir(directory) {
+        Ok(entries) => entries as i16,
         Err(_) => 0
     }
 }

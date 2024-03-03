@@ -187,24 +187,23 @@ async fn main() -> io::Result<()> {
 
     // adds a value to a vec!
     let mut array: Vec<i16> = Vec::new(); // array lel
-
-                                                                // this is a hack fix. i don't know why this happens.
-    array.extend([getlen!(usr), getlen!(distro), getlen!(shell), getlen!(cpu_name) - 3, getlen!(desktop), getlen!(uptime), getlen!(arch)]);
+    array.extend([
+         getlen!(usr),
+         getlen!(distro),
+         getlen!(shell),
+         getlen!(cpu_name) - 3,
+         getlen!(desktop),
+         getlen!(uptime),
+         getlen!(arch)
+    ]);
 
     // and then finds the biggest number in a vec!
     // this is important because we don't want the fancy af box to go to the edge of the screen.
     let box_width = get_max_value_of_vec(array);
 
     let mut handle = io::stdout().lock(); // lock stdout for slightly faster writing
-    // the actual printing
     writeln!(handle, "{}{} - {}", "ex".red().bold(), "Fetch".cyan(), usr).unwrap();
-    /*
-╭───────┬─────────╮
-│ Name  ┆ NonFree │
-╞═══════╪═════════╡
-│ r8168 ┆ false   │
-╰───────┴─────────╯
-*/
+
     writeln!(handle, "{}", return_super_fancy_column_stuff("HARDWARE", box_width));
     writeln_to_handle_if_not_empty!(handle, "CPU", cpu_name, box_width); // should never be empty smh
     writeln_to_handle_if_not_empty!(handle, "Uptime", uptime, box_width);
