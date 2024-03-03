@@ -22,10 +22,7 @@ macro_rules! writeln_to_handle_if_not_empty {
 macro_rules! writeln_to_handle {
     ($handle:expr, $entry:expr, $value:expr, $terminal_width:expr) => {
         let to_write = format!("│ {} ~ {}", $entry.purple(), $value);
-        // println!("term: {}, entry: {}, value: {}", $terminal_width, $entry.len(), $value.len());
-        // println!("entry & value: {}", $entry.len() + $value.len());
         let padding = $terminal_width as usize - ($entry.len() + $value.len());
-        // println!("padding: {}", &padding);
         writeln!($handle, "{}", format!("{}{} │", to_write, " ".repeat(padding as usize)));
     };
 }
@@ -39,7 +36,7 @@ macro_rules! get_env_var {
 /// returns the length as an i32; designed to make the code more concise.
 macro_rules! getlen {
     ($to_find:expr) => {
-        $to_find.len() as i16 + 6 // add 3 because of the ` ~ `
+        $to_find.len() as i16 + 6 // add 6 because of the ` ~ ` and padding between the edge of the box
     }
 }
 
@@ -92,22 +89,22 @@ async fn main() -> io::Result<()> {
     let cpu_name_thread = spawn(async {
         #[cfg(unix)] {
             // TODO: fix indentation hell
-            // if let Ok(cpuinfo) = std::fs::read_to_string("/proc/cpuinfo") {
-            //     for line in cpuinfo.lines() {
-            //         if line.starts_with("model name") {
-            //             let parts: Vec<&str> = line.split(":").collect();
-            //             if parts.len() > 1 {
-            //                 let cpu_name = parts[1].trim();
-            //                 // let cpu_name = "Intel(R) Core(TM) i3-1005G1 CPU @ 1.20GHz"; // thanks xander
-            //                 // let cpu_name = "AMD EPYC 7B13"; // thanks xander
-            //
-            //                 // this works for my own intel i7 cpu
-            //                 let debloated_name = cpu_name.replace("(R)", "").replace("(TM)", "").replace(" @ ", "(").replace("CPU", "").replace("GHz", "GHz)").replace("(", "(").replace(") ", ")");
-            //                 return debloated_name;
-            //             }
-            //         }
-            //     }
-            // }
+            if let Ok(cpuinfo) = std::fs::read_to_string("/proc/cpuinfo") {
+                for line in cpuinfo.lines() {
+                    if line.starts_with("model name") {
+                        let parts: Vec<&str> = line.split(":").collect();
+                        if parts.len() > 1 {
+                            let cpu_name = parts[1].trim();
+                            // let cpu_name = "Intel(R) Core(TM) i3-1005G1 CPU @ 1.20GHz"; // thanks xander
+                            // let cpu_name = "AMD EPYC 7B13"; // thanks xander
+
+                            // this works for my own intel i7 cpu
+                            let debloated_name = cpu_name.replace("(R)", "").replace("(TM)", "").replace(" @ ", "(").replace("CPU", "").replace("GHz", "GHz)").replace("(", "(").replace(") ", ")");
+                            return debloated_name;
+                        }
+                    }
+                }
+            }
             String::new() // can't read /proc/cpuinfo, return an empty string.
         }
         #[cfg(windows)] {
@@ -193,12 +190,10 @@ async fn main() -> io::Result<()> {
     // adds a value to a vec!
     let mut array: Vec<i16> = Vec::new(); // array lel
     array.extend([getlen!(usr), getlen!(distro), getlen!(shell), getlen!(cpu_name), getlen!(desktop), getlen!(uptime), getlen!(arch)]);
-    dbg!(&array);
 
     // and then finds the biggest number in a vec!
     // this is important because we don't want the fancy af box to go to the edge of the screen.
     let box_width = get_max_value_of_vec(array);
-    dbg!(&box_width);
 
     let mut handle = io::stdout().lock(); // lock stdout for slightly faster writing
     // the actual printing
