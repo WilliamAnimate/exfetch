@@ -5,10 +5,7 @@ use tokio::{task::spawn, join};
 
 #[cfg(windows)] use winreg::enums::*;
 #[cfg(windows)] use winreg::RegKey;
-// #[cfg(windows)] use windows_sys::Win32::System::SystemInformation::OSVERSIONINFOW;
-// #[cfg(windows)] use windows_sys::Win32::System::SystemInformation::GetVersionExW;
-// #[cfg(windows)] use windows_sys::Win32::System::SystemInformation::GetVersionExA;
-//
+
 pub mod packages;
 
 macro_rules! writeln_to_handle_if_not_empty {
