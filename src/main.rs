@@ -60,7 +60,8 @@ fn process_cpu_name(text: String) -> String {
 #[tokio::main]
 async fn main() -> io::Result<()> {
     let name_thread = spawn(async {
-        get_env_var!("USER")
+        #[cfg(unix)] return get_env_var!("USER");
+        #[cfg(windows)] return get_env_var!("USERNAME");
     });
 
     let distro_thread = spawn(async {
