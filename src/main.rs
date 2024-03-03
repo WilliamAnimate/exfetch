@@ -48,6 +48,15 @@ fn return_super_fancy_column_closure_stuff(times: i16) -> String {
     format!("╰{}╯", lines)
 }
 
+fn process_cpu_name(text: String) -> String {
+    text.replace("(R)", "")
+        .replace("(TM)", "")
+        .replace(" @ ", "(")
+        .replace("CPU", "")
+        .replace("GHz", "GHz)")
+        .replace(") ", ")")
+}
+
 #[tokio::main]
 async fn main() -> io::Result<()> {
     let name_thread = spawn(async {
@@ -93,12 +102,7 @@ async fn main() -> io::Result<()> {
                         let parts: Vec<&str> = line.split(":").collect();
                         if parts.len() > 1 {
                             let cpu_name = parts[1].trim();
-                            // let cpu_name = "Intel(R) Core(TM) i3-1005G1 CPU @ 1.20GHz"; // thanks xander
-                            // let cpu_name = "AMD EPYC 7B13"; // thanks xander
-
-                            // this works for my own intel i7 cpu
-                            let debloated_name = cpu_name.replace("(R)", "").replace("(TM)", "").replace(" @ ", "(").replace("CPU", "").replace("GHz", "GHz)").replace("(", "(").replace(") ", ")");
-                            return debloated_name;
+                            return process_cpu_name(cpu_name.to_string());
                         }
                     }
                 }
@@ -109,7 +113,7 @@ async fn main() -> io::Result<()> {
             let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
             if let Ok(subkey) = hklm.open_subkey_with_flags(r#"HARDWARE\DESCRIPTION\System\CentralProcessor\0"#, KEY_READ) {
                 if let Ok(cpu_name) = subkey.get_value("ProcessorNameString") {
-                    return cpu_name;
+                    return process_cpu_name(cpu_name);
                 }
             }
 
