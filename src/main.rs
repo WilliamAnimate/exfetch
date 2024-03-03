@@ -186,7 +186,9 @@ async fn main() -> io::Result<()> {
 
     // adds a value to a vec!
     let mut array: Vec<i16> = Vec::new(); // array lel
-    array.extend([getlen!(usr), getlen!(distro), getlen!(shell), getlen!(cpu_name), getlen!(desktop), getlen!(uptime), getlen!(arch)]);
+
+                                                                // this is a hack fix. i don't know why this happens.
+    array.extend([getlen!(usr), getlen!(distro), getlen!(shell), getlen!(cpu_name) - 3, getlen!(desktop), getlen!(uptime), getlen!(arch)]);
 
     // and then finds the biggest number in a vec!
     // this is important because we don't want the fancy af box to go to the edge of the screen.
