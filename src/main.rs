@@ -21,11 +21,12 @@ macro_rules! writeln_to_handle_if_not_empty {
 
 macro_rules! writeln_to_handle {
     ($handle:expr, $entry:expr, $value:expr, $terminal_width:expr) => {
-        // use std::fmt::Write;
         let to_write = format!("│ {} ~ {}", $entry.purple(), $value);
-        let padding = $terminal_width as usize + 3 - ($entry.len() + $value.len());
-        // dbg!(&padding);
-        writeln!($handle, "{}", format!("{}{} │", to_write, " ".repeat(padding)));
+        // println!("term: {}, entry: {}, value: {}", $terminal_width, $entry.len(), $value.len());
+        // println!("entry & value: {}", $entry.len() + $value.len());
+        let padding = $terminal_width as usize - ($entry.len() + $value.len());
+        // println!("padding: {}", &padding);
+        writeln!($handle, "{}", format!("{}{} │", to_write, " ".repeat(padding as usize)));
     };
 }
 
@@ -38,18 +39,18 @@ macro_rules! get_env_var {
 /// returns the length as an i32; designed to make the code more concise.
 macro_rules! getlen {
     ($to_find:expr) => {
-        $to_find.len() as i16
+        $to_find.len() as i16 + 6 // add 3 because of the ` ~ `
     }
 }
 
 fn return_super_fancy_column_stuff(text: &str, times: i16) -> String {
     let padding = "─";
-    let trailing = "─".repeat(((times + 7) - text.len() as i16).try_into().unwrap());
+    let trailing = "─".repeat(((times + 4) - text.len() as i16).try_into().unwrap());
     format!("╭{}{}{}╮", padding, text, trailing)
 }
 
 fn return_super_fancy_column_closure_stuff(times: i16) -> String {
-    let lines = "─".repeat((times + 8).try_into().unwrap());
+    let lines = "─".repeat((times + 5).try_into().unwrap());
     format!("╰{}╯", lines)
 }
 
@@ -91,30 +92,33 @@ async fn main() -> io::Result<()> {
     let cpu_name_thread = spawn(async {
         #[cfg(unix)] {
             // TODO: fix indentation hell
-            if let Ok(cpuinfo) = std::fs::read_to_string("/proc/cpuinfo") {
-                for line in cpuinfo.lines() {
-                    if line.starts_with("model name") {
-                        let parts: Vec<&str> = line.split(":").collect();
-                        if parts.len() > 1 {
-                            let cpu_name = parts[1].trim();
-                            // let cpu_name = "Intel(R) Core(TM) i3-1005G1 CPU @ 1.20GHz"; // thanks xander
-                            // let cpu_name = "AMD EPYC 7B13"; // thanks xander
-
-                            // this works for my own intel i7 cpu
-                            let debloated_name = cpu_name.replace("(R)", "").replace("(TM)", "").replace(" @ ", "(").replace("CPU", "").replace("GHz", "GHz)").replace("(", "(").replace(") ", ")");
-                            return debloated_name;
-                        }
-                    }
-                }
-            }
+            // if let Ok(cpuinfo) = std::fs::read_to_string("/proc/cpuinfo") {
+            //     for line in cpuinfo.lines() {
+            //         if line.starts_with("model name") {
+            //             let parts: Vec<&str> = line.split(":").collect();
+            //             if parts.len() > 1 {
+            //                 let cpu_name = parts[1].trim();
+            //                 // let cpu_name = "Intel(R) Core(TM) i3-1005G1 CPU @ 1.20GHz"; // thanks xander
+            //                 // let cpu_name = "AMD EPYC 7B13"; // thanks xander
+            //
+            //                 // this works for my own intel i7 cpu
+            //                 let debloated_name = cpu_name.replace("(R)", "").replace("(TM)", "").replace(" @ ", "(").replace("CPU", "").replace("GHz", "GHz)").replace("(", "(").replace(") ", ")");
+            //                 return debloated_name;
+            //             }
+            //         }
+            //     }
+            // }
             String::new() // can't read /proc/cpuinfo, return an empty string.
         }
         #[cfg(windows)] {
             let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-            let subkey = hklm.open_subkey_with_flags(r#"HARDWARE\DESCRIPTION\System\CentralProcessor\0"#, KEY_READ).unwrap();
-            let cpu_name: String = subkey.get_value("ProcessorNameString").unwrap();
+            if let Ok(subkey) = hklm.open_subkey_with_flags(r#"HARDWARE\DESCRIPTION\System\CentralProcessor\0"#, KEY_READ) {
+                if let Ok(cpu_name) = subkey.get_value("ProcessorNameString") {
+                    return cpu_name;
+                }
+            }
 
-            cpu_name
+            return String::new();
         }
     });
 
@@ -189,12 +193,12 @@ async fn main() -> io::Result<()> {
     // adds a value to a vec!
     let mut array: Vec<i16> = Vec::new(); // array lel
     array.extend([getlen!(usr), getlen!(distro), getlen!(shell), getlen!(cpu_name), getlen!(desktop), getlen!(uptime), getlen!(arch)]);
+    dbg!(&array);
 
     // and then finds the biggest number in a vec!
     // this is important because we don't want the fancy af box to go to the edge of the screen.
     let box_width = get_max_value_of_vec(array);
-    // HACK ALERT: the longest field is "desktop", so we add how long desktop is (7 chars.)
-    // this is hardcoded. good luck maintaining :3
+    dbg!(&box_width);
 
     let mut handle = io::stdout().lock(); // lock stdout for slightly faster writing
     // the actual printing
