@@ -33,7 +33,7 @@ macro_rules! get_env_var {
     };
 }
 
-/// returns the length as an i32; designed to make the code more concise.
+/// returns the length as an i16; designed to make the code more concise.
 macro_rules! getlen {
     ($to_find:expr) => {
         $to_find.len() as i16 + 6 // add 6 because of the ` ~ ` and padding between the edge of the box
