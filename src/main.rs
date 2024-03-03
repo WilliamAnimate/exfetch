@@ -74,12 +74,13 @@ async fn main() -> io::Result<()> {
             let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
             let subkey = hklm.open_subkey_with_flags(r#"SOFTWARE\Microsoft\Windows NT\CurrentVersion"#, KEY_READ).unwrap();
             let mut version: String = subkey.get_value("ProductName").unwrap();
-            let releaseid: String = subkey.get_value("ReleaseId").unwrap();
+            let current_build: String = subkey.get_value("CurrentBuild").unwrap();
+            let display_version: String = subkey.get_value("DisplayVersion").unwrap();
 
             // remove pro/enterprise/home/etc from the version
             version = version.replace(" Pro", "").replace(" Home", "").replace(" Enterprise", "");
 
-            format!("{}, Version {}", version, releaseid)
+            format!("{}, {} (build {})", version, display_version, current_build)
         }
     });
 
