@@ -4,7 +4,9 @@ A fork of [xFetch](https://codeberg.org/XDR/xFetch) designed to look as good as 
 
 ## y
 
-xFetch is an extremely fast fetch but its kind of plain. This fork keeps its top tier speed (i think) and makes it look slightly better.
+xFetch's main goal is simplicity, minimalism, and performance. In the performance regard, yeah, its pretty damn fast.
+
+exFetch's main goal is performance, looks, maintainability and the ability to run on Windows.
 
 ## Roadmap
 
