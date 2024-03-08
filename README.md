@@ -6,7 +6,7 @@ A fork of [xFetch](https://codeberg.org/XDR/xFetch) designed to look as good as 
 
 xFetch's main goal is simplicity, minimalism, and performance. In the performance regard, yeah, its pretty damn fast.
 
-exFetch's main goal is performance, looks, maintainability and the ability to run on Windows.
+exFetch's main goal is performance, looks, maintainability and to be cross platform.
 
 ## Roadmap
 
