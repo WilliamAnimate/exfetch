@@ -196,7 +196,7 @@ async fn main() -> io::Result<()> {
          getlen!(usr),
          getlen!(distro),
          getlen!(shell),
-         getlen!(cpu_name) - 3,
+         getlen!(cpu_name) - 3, // hack fix, i don't know why this is needed.
          getlen!(desktop),
          getlen!(uptime),
          getlen!(arch)
