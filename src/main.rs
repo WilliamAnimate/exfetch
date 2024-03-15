@@ -1,3 +1,4 @@
+#![allow(clippy::cast_possible_truncation)]
 #![allow(unused_must_use)]
 use std::{io::{self, Write, BufRead}, fs::File};
 use colored::Colorize;
