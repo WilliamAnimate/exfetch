@@ -55,7 +55,6 @@ fn process_cpu_name(text: &str) -> String {
         .replace(" @ ", "(")
         .replace("CPU", "")
         .replace("GHz", "GHz)")
-        .replace(") ", ")")
 }
 
 #[tokio::main]
