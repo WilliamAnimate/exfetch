@@ -40,15 +40,15 @@ macro_rules! getlen {
 fn return_super_fancy_column_stuff(text: &str, times: i16) -> String {
     let padding = "─";
     let trailing = "─".repeat(((times + 4) - text.len() as i16).try_into().unwrap());
-    format!("╭{}{}{}╮", padding, text, trailing)
+    format!("╭{padding}{text}{trailing}╮")
 }
 
 fn return_super_fancy_column_closure_stuff(times: i16) -> String {
     let lines = "─".repeat((times + 5).try_into().unwrap());
-    format!("╰{}╯", lines)
+    format!("╰{lines}╯")
 }
 
-fn process_cpu_name(text: String) -> String {
+fn process_cpu_name(text: &str) -> String {
     text.replace("(R)", "")
         .replace("(TM)", "")
         .replace(" @ ", "(")
@@ -100,10 +100,10 @@ async fn main() -> io::Result<()> {
             if let Ok(cpuinfo) = std::fs::read_to_string("/proc/cpuinfo") {
                 for line in cpuinfo.lines() {
                     if line.starts_with("model name") {
-                        let parts: Vec<&str> = line.split(":").collect();
+                        let parts: Vec<&str> = line.split(':').collect();
                         if parts.len() > 1 {
                             let cpu_name = parts[1].trim();
-                            return process_cpu_name(cpu_name.to_string());
+                            return process_cpu_name(cpu_name);
                         }
                     }
                 }
@@ -150,16 +150,16 @@ async fn main() -> io::Result<()> {
                 let mut formatted_uptime = String::new();
 
                 if days > 0 {
-                    formatted_uptime.push_str(&format!("{}d, ", days));
+                    formatted_uptime.push_str(&format!("{days}d, "));
                 }
                 if hrs > 0 || days > 0 {
-                    formatted_uptime.push_str(&format!("{}h, ", hrs));
+                    formatted_uptime.push_str(&format!("{hrs}h, "));
                 }
                 if mins > 0 || hrs > 0 || days > 0 {
-                    formatted_uptime.push_str(&format!("{}m", mins));
+                    formatted_uptime.push_str(&format!("{mins}m"));
                 } else {
                     // system uptime is less than a minute. display seconds instead.
-                    formatted_uptime.push_str(&format!("{}s", raw));
+                    formatted_uptime.push_str(&format!("{raw}s"));
                 }
 
                 formatted_uptime
@@ -204,7 +204,7 @@ async fn main() -> io::Result<()> {
 
     // and then finds the biggest number in a vec!
     // this is important because we don't want the fancy af box to go to the edge of the screen.
-    let box_width = get_max_value_of_vec(array);
+    let box_width = get_max_value_of_vec(&array);
 
     let mut handle = io::stdout().lock(); // lock stdout for slightly faster writing
     writeln!(handle, "{}{} - {}", "ex".red().bold(), "Fetch".cyan(), usr).unwrap();
@@ -228,9 +228,6 @@ async fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn get_max_value_of_vec(vec: Vec<i16>) -> i16 {
-    match vec.iter().max() {
-        Some(max) => *max,
-        None => panic!("the entire vector is empty, wtf?"),
-    }
+fn get_max_value_of_vec(vec: &[i16]) -> i16 {
+    vec.iter().max().map_or_else(|| panic!("the entire vector is empty, wtf?"), |max| *max)
 }
