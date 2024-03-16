@@ -1,9 +1,12 @@
 #![allow(clippy::cast_possible_truncation)]
 #![allow(unused_must_use)]
 
+mod sysinfo;
+
 mod cpu_readout;
 mod distro_readout;
 mod packages_readout;
+mod memory_readout;
 
 use std::io::{self, Write, BufWriter};
 use tokio::{task::spawn, join};
@@ -149,8 +152,16 @@ async fn main() -> io::Result<()> {
         }
     });
 
+    let memory_thread = spawn(async {
+        memory_readout::get_physical()
+    });
+
+    let memory_swap_thread = spawn(async {
+        memory_readout::get_virtual()
+    });
+
     // join! to await all `futures` types concurrently
-    let (header, distro, shell, cpu_name, desktop, pkg, uptime) = join!(
+    let (header, distro, shell, cpu_name, desktop, pkg, uptime, memory, memory_swap) = join!(
         header_thread,
         distro_thread,
         shell_thread,
@@ -158,6 +169,8 @@ async fn main() -> io::Result<()> {
         desktop_thread,
         packages_thread,
         uptime_thread,
+        memory_thread,
+        memory_swap_thread,
     );
 
     // and then .unwrap the results. pray that none of them contain an `Err` type & panic! the app
@@ -169,6 +182,8 @@ async fn main() -> io::Result<()> {
     let desktop = desktop.unwrap();
     let pkg = pkg.unwrap();
     let uptime = uptime.unwrap();
+    let memory = memory.unwrap();
+    let memory_swap = memory_swap.unwrap();
     let arch = std::env::consts::ARCH;
 
     // adds a value to a vec!
@@ -194,6 +209,7 @@ async fn main() -> io::Result<()> {
 
     writer.write_all(return_super_fancy_column_stuff("HARDWARE", box_width).as_bytes());
     writeln_to_handle_if_not_empty!(&mut writer, "CPU", &cpu_name, box_width); // should never be empty smh
+    writeln_to_handle_if_not_empty!(&mut writer, "Phys Mem", &memory, box_width);
     writeln_to_handle_if_not_empty!(&mut writer, "Arch", &arch, box_width);
     writeln_to_handle_if_not_empty!(&mut writer, "Uptime", &uptime, box_width);
     writer.write_all(return_super_fancy_column_closure_stuff(box_width).as_bytes());
@@ -202,6 +218,7 @@ async fn main() -> io::Result<()> {
     writeln_to_handle_if_not_empty_i16!(&mut writer, "PKGs", pkg, box_width);
     writeln_to_handle_if_not_empty!(&mut writer, "Distro", &distro, box_width);
     writeln_to_handle_if_not_empty!(&mut writer, "Desktop", &desktop, box_width);
+    writeln_to_handle_if_not_empty!(&mut writer, "Swap", &memory_swap, box_width);
     writer.write_all(return_super_fancy_column_closure_stuff(box_width).as_bytes());
 
     Ok(())
