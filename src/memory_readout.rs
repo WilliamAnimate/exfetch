@@ -1,3 +1,11 @@
+// TODO: implement windows support
+// for now, this code will return an empty string which should hint it to not output anything.
+#[cfg(windows)]
+pub fn get_physical() -> String {String::new()}
+#[cfg(windows)]
+pub fn get_virtual() -> String {String::new()}
+
+#[cfg(unix)]
 pub fn get_physical() -> String {
     let info = crate::sysinfo::collect();
     let totalram = info.totalram / 1024000;
@@ -10,6 +18,7 @@ pub fn get_physical() -> String {
     output
 }
 
+#[cfg(unix)]
 pub fn get_virtual() -> String {
     // TODO: this can be improved upon:
     // this code will collect the sysinfo twice. maybe there is a way we can share this?

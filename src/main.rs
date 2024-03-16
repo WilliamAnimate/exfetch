@@ -1,6 +1,7 @@
 #![allow(clippy::cast_possible_truncation)]
 #![allow(unused_must_use)]
 
+#[cfg(unix)]
 mod sysinfo;
 
 mod cpu_readout;
