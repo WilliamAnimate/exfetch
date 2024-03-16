@@ -127,16 +127,20 @@ async fn main() -> io::Result<()> {
                 let mut formatted_uptime = String::new();
 
                 if days > 0 {
-                    formatted_uptime.push_str(&format!("{days}d, "));
+                    formatted_uptime.push_str(&days.to_string());
+                    formatted_uptime.push_str("d, ");
                 }
                 if hrs > 0 || days > 0 {
-                    formatted_uptime.push_str(&format!("{hrs}h, "));
+                    formatted_uptime.push_str(&hrs.to_string());
+                    formatted_uptime.push_str("h, ");
                 }
                 if mins > 0 || hrs > 0 || days > 0 {
-                    formatted_uptime.push_str(&format!("{mins}m"));
+                    formatted_uptime.push_str(&mins.to_string());
+                    formatted_uptime.push('m');
                 } else {
                     // system uptime is less than a minute. display seconds instead.
-                    formatted_uptime.push_str(&format!("{raw}s"));
+                    formatted_uptime.push_str(&raw.to_string());
+                    formatted_uptime.push('s');
                 }
 
                 formatted_uptime
