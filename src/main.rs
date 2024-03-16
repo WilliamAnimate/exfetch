@@ -6,7 +6,6 @@ mod distro_readout;
 mod packages_readout;
 
 use std::io::{self, Write, BufWriter};
-use colored::Colorize;
 use tokio::{task::spawn, join};
 
 #[cfg(windows)] use winreg::enums::*;
@@ -56,7 +55,6 @@ macro_rules! get_env_var {
 /// returns the length as an i16; designed to make the code more concise.
 macro_rules! getlen {
     ($to_find:expr) => {
-        // $to_find.len() as i16 - 7 // at this point im not sure why i have to subtract 7 here. its 1:46 AM, give me a break.
         $to_find.len() as i16 + 6 // add 6 because of the ` ~ ` and padding between the edge of the box
     }
 }
