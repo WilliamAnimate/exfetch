@@ -1,13 +1,16 @@
 #![allow(clippy::cast_possible_truncation)]
 #![allow(unused_must_use)]
-use std::{io::{self, Write, BufRead}, fs::File};
+
+mod cpu_readout;
+mod distro_readout;
+mod packages_readout;
+
+use std::io::{self, Write};
 use colored::Colorize;
 use tokio::{task::spawn, join};
 
 #[cfg(windows)] use winreg::enums::*;
 #[cfg(windows)] use winreg::RegKey;
-
-pub mod packages;
 
 macro_rules! writeln_to_handle_if_not_empty {
     ($handle:expr, $entry:expr, $value:expr, $terminal_width:expr) => {
@@ -49,14 +52,6 @@ fn return_super_fancy_column_closure_stuff(times: i16) -> String {
     format!("╰{lines}╯")
 }
 
-fn process_cpu_name(text: &str) -> String {
-    text.replace("(R)", "")
-        .replace("(TM)", "")
-        .replace(" @ ", "(")
-        .replace("CPU", "")
-        .replace("GHz", "GHz)")
-}
-
 #[tokio::main]
 async fn main() -> io::Result<()> {
     let name_thread = spawn(async {
@@ -65,61 +60,11 @@ async fn main() -> io::Result<()> {
     });
 
     let distro_thread = spawn(async {
-        #[cfg(unix)] {
-            let file = File::open("/etc/os-release").expect("Can't open /etc/os-release!");
-            let mut reader = io::BufReader::new(file);
-            let (mut line, mut pretty_name) = (String::new(), String::new());
-
-            while reader.read_line(&mut line).expect("Failed to read line") > 0 {
-                if line.starts_with("PRETTY_NAME=") {
-                    pretty_name = line.split_once('=').unwrap().1.to_string();
-                    pretty_name = pretty_name.trim().trim_matches('"').to_string();
-                    break;
-                }
-                line.clear();
-            }
-            pretty_name
-        }
-        #[cfg(windows)] {
-            let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-            let subkey = hklm.open_subkey_with_flags(r#"SOFTWARE\Microsoft\Windows NT\CurrentVersion"#, KEY_READ).unwrap();
-            let mut version: String = subkey.get_value("ProductName").unwrap();
-            let current_build: String = subkey.get_value("CurrentBuild").unwrap();
-            let display_version: String = subkey.get_value("DisplayVersion").unwrap();
-
-            // remove pro/enterprise/home/etc from the version
-            version = version.replace(" Pro", "").replace(" Home", "").replace(" Enterprise", "");
-
-            format!("{}, {} (build {})", version, display_version, current_build)
-        }
+        distro_readout::get()
     });
 
     let cpu_name_thread = spawn(async {
-        #[cfg(unix)] {
-            // TODO: fix indentation hell
-            if let Ok(cpuinfo) = std::fs::read_to_string("/proc/cpuinfo") {
-                for line in cpuinfo.lines() {
-                    if line.starts_with("model name") {
-                        let parts: Vec<&str> = line.split(':').collect();
-                        if parts.len() > 1 {
-                            let cpu_name = parts[1].trim();
-                            return process_cpu_name(cpu_name);
-                        }
-                    }
-                }
-            }
-            String::new() // can't read /proc/cpuinfo, return an empty string.
-        }
-        #[cfg(windows)] {
-            let hklm = RegKey::predef(HKEY_LOCAL_MACHINE);
-            if let Ok(subkey) = hklm.open_subkey_with_flags(r#"HARDWARE\DESCRIPTION\System\CentralProcessor\0"#, KEY_READ) {
-                if let Ok(cpu_name) = subkey.get_value("ProcessorNameString") {
-                    return process_cpu_name(cpu_name);
-                }
-            }
-
-            return String::new();
-        }
+        cpu_readout::get()
     });
 
     let desktop_thread = spawn(async {
@@ -136,7 +81,7 @@ async fn main() -> io::Result<()> {
     });
 
     let packages_thread = spawn(async {
-        packages::get_num_packages()
+        packages_readout::get()
     });
 
     let uptime_thread = spawn(async {
