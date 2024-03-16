@@ -11,10 +11,8 @@ pub fn get_physical() -> String {
     let totalram = info.totalram / 1024000;
     let mut output = String::from(totalram.to_string());
     output.push_str(" MB");
-    println!("Total RAM: {} MB", info.totalram / 1024000);
     // note: the sysinfo struct does not expose enough useful info to determine the amount of
     // available ram. the next best option is `free` ram (unused ram) but it isn't the same thing.
-    dbg!(&output);
     output
 }
 
