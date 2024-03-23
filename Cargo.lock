@@ -149,9 +149,9 @@ dependencies = [
 
 [[package]]
 name = "sysinfo_dot_h"
-version = "0.1.0"
+version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "a6ddfc0da71e5ad7b298a4884b4d74976a11e93aba95dc9c56dee407621bfd76"
+checksum = "0bc9d1d00d68bd2540377e4cebb331c6826b8088c3d8b53ce90539c2e5d40138"
 
 [[package]]
 name = "thiserror"
