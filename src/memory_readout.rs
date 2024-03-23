@@ -4,10 +4,14 @@
 pub fn get_physical() -> String {String::new()}
 #[cfg(windows)]
 pub fn get_virtual() -> String {String::new()}
+use sysinfo_dot_h::try_collect;
 
 #[cfg(unix)]
 pub fn get_physical() -> String {
-    let info = crate::sysinfo::collect();
+    let info = match try_collect() {
+        Ok(info) => info,
+        Err(_err) => return String::new(),
+    };
     let totalram = info.totalram / 1024000;
     let mut output = String::from(totalram.to_string());
     output.push_str(" MB");
@@ -21,7 +25,10 @@ pub fn get_virtual() -> String {
     // TODO: this can be improved upon:
     // this code will collect the sysinfo twice. maybe there is a way we can share this?
     // i don't want to use dependencies like lazy static or once cell though. maybe someday.
-    let info = crate::sysinfo::collect();
+    let info = match try_collect() {
+        Ok(info) => info,
+        Err(_err) => return String::new(),
+    };
 
     let virtualram = info.totalswap / 1024000;
     let mut output = String::new();

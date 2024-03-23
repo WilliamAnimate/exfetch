@@ -4,6 +4,7 @@ version = "0.9.0"
 edition = "2021"
 
 [dependencies]
+sysinfo_dot_h = "0.1.0"
 tokio = { version = "1.36.0", features = ["macros", "rt-multi-thread"] }
 uptime_lib = "0.3.0"
 
