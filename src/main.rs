@@ -5,6 +5,7 @@ mod cpu_readout;
 mod distro_readout;
 mod packages_readout;
 mod memory_readout;
+mod uptime_readout;
 
 use std::io::{self, Write, BufWriter};
 use tokio::{task::spawn, join};
@@ -117,66 +118,30 @@ async fn main() -> io::Result<()> {
         packages_readout::get()
     });
 
-    let uptime_thread = spawn(async {
-        match sysinfo_dot_h::try_collect() {
-            Ok(info) => {
-                let raw = info.uptime;
-                // for year calculation, we use a float to be able to divide by 365.25
-                // we dont need all that accuracy (accuracy != precision) but yolo
-                let (years, days, hrs, mins) = (raw as f64 / (60.0 * 60.0 * 24.0 * 365.25),
-                                                raw / (60 * 60 * 24),
-                                                raw/ (60 * 60) % 24,
-                                                raw / 60 % 60);
-
-                let mut formatted_uptime = String::new();
-
-                let years_no_decimal = years as i64;
-                if years_no_decimal > 0 {
-                    formatted_uptime.push_str(&years_no_decimal.to_string());
-                    formatted_uptime.push_str("y, ");
-                }
-                if days > 0 {
-                    formatted_uptime.push_str(&days.to_string());
-                    formatted_uptime.push_str("d, ");
-                }
-                if hrs > 0 || days > 0 {
-                    formatted_uptime.push_str(&hrs.to_string());
-                    formatted_uptime.push_str("h, ");
-                }
-                if mins > 0 || hrs > 0 || days > 0 {
-                    formatted_uptime.push_str(&mins.to_string());
-                    formatted_uptime.push('m');
-                } else {
-                    // system uptime is less than a minute. display seconds instead.
-                    formatted_uptime.push_str(&raw.to_string());
-                    formatted_uptime.push('s');
-                }
-
-                formatted_uptime
+    let mut phys_mem = String::new();
+    let mut swap_mem = String::new();
+    let mut uptime = String::new();
+    #[cfg(unix)] {
+        let sysinfo = sysinfo_dot_h::try_collect();
+        match sysinfo {
+            Ok(sysinfo) => {
+                // TODO: implement
+                phys_mem = memory_readout::format_memory_from_bytes(sysinfo.totalram);
+                swap_mem = memory_readout::format_memory_from_bytes(sysinfo.totalswap);
+                uptime = uptime_readout::format_uptime_from_secs(sysinfo.uptime);
             }
-            Err(_) => String::new(),
+            Err(_) => (),
         }
-    });
-
-    let memory_thread = spawn(async {
-        memory_readout::get_physical()
-    });
-
-    let memory_swap_thread = spawn(async {
-        memory_readout::get_virtual()
-    });
+    }
 
     // join! to await all `futures` types concurrently
-    let (header, distro, shell, cpu_name, desktop, pkg, uptime, memory, memory_swap) = join!(
+    let (header, distro, shell, cpu_name, desktop, pkg) = join!(
         header_thread,
         distro_thread,
         shell_thread,
         cpu_name_thread,
         desktop_thread,
         packages_thread,
-        uptime_thread,
-        memory_thread,
-        memory_swap_thread,
     );
 
     // and then .unwrap the results. pray that none of them contain an `Err` type & panic! the app
@@ -187,9 +152,6 @@ async fn main() -> io::Result<()> {
     let cpu_name = cpu_name.unwrap();
     let desktop = desktop.unwrap();
     let pkg = pkg.unwrap();
-    let uptime = uptime.unwrap();
-    let memory = memory.unwrap();
-    let memory_swap = memory_swap.unwrap();
     let arch = std::env::consts::ARCH;
 
     // adds a value to a vec!
@@ -215,7 +177,7 @@ async fn main() -> io::Result<()> {
 
     writer.write_all(return_super_fancy_column_stuff("HARDWARE", box_width).as_bytes());
     writeln_to_handle_if_not_empty!(&mut writer, "CPU", &cpu_name, box_width); // should never be empty smh
-    writeln_to_handle_if_not_empty!(&mut writer, "Phys Mem", &memory, box_width);
+    writeln_to_handle_if_not_empty!(&mut writer, "Phys Mem", &phys_mem, box_width);
     writeln_to_handle_if_not_empty!(&mut writer, "Arch", &arch, box_width);
     writeln_to_handle_if_not_empty!(&mut writer, "Uptime", &uptime, box_width);
     writer.write_all(return_super_fancy_column_closure_stuff(box_width).as_bytes());
@@ -224,7 +186,7 @@ async fn main() -> io::Result<()> {
     writeln_to_handle_if_not_empty_i16!(&mut writer, "PKGs", pkg, box_width);
     writeln_to_handle_if_not_empty!(&mut writer, "Distro", &distro, box_width);
     writeln_to_handle_if_not_empty!(&mut writer, "Desktop", &desktop, box_width);
-    writeln_to_handle_if_not_empty!(&mut writer, "Swap", &memory_swap, box_width);
+    writeln_to_handle_if_not_empty!(&mut writer, "Swap", &swap_mem, box_width);
     writer.write_all(return_super_fancy_column_closure_stuff(box_width).as_bytes());
 
     Ok(())
