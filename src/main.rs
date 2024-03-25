@@ -118,15 +118,23 @@ async fn main() -> io::Result<()> {
     });
 
     let uptime_thread = spawn(async {
-        match uptime_lib::get() {
-            Ok(uptime) => {
-                let raw = uptime.as_secs();
-                let (days, hrs, mins) = (raw / (60 * 60 * 24),
-                                         raw/ (60 * 60) % 24,
-                                         raw / 60 % 60);
+        match sysinfo_dot_h::try_collect() {
+            Ok(info) => {
+                let raw = info.uptime;
+                // for year calculation, we use a float to be able to divide by 365.25
+                // we dont need all that accuracy (accuracy != precision) but yolo
+                let (years, days, hrs, mins) = (raw as f64 / (60.0 * 60.0 * 24.0 * 365.25),
+                                                raw / (60 * 60 * 24),
+                                                raw/ (60 * 60) % 24,
+                                                raw / 60 % 60);
 
                 let mut formatted_uptime = String::new();
 
+                let years_no_decimal = years as i64;
+                if years_no_decimal > 0 {
+                    formatted_uptime.push_str(&years_no_decimal.to_string());
+                    formatted_uptime.push_str("y, ");
+                }
                 if days > 0 {
                     formatted_uptime.push_str(&days.to_string());
                     formatted_uptime.push_str("d, ");
