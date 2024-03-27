@@ -1,6 +1,6 @@
 # exFetch
 
-A fork of [xFetch](https://codeberg.org/XDR/xFetch) designed to look as good as possible.
+A fork of [xFetch](https://codeberg.org/XDR/xFetch) designed to be faster, more maintainable and cross-platform.
 
 ## y
 
