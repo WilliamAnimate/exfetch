@@ -2,8 +2,8 @@
 #![allow(unused_must_use)]
 
 mod data;
-#[cfg(unix)] mod unix;
-#[cfg(unix)] use crate::unix::*;
+#[cfg(target_os = "linux")] mod linux;
+#[cfg(target_os = "linux")] use crate::linux::*;
 
 #[cfg(windows)] mod windows;
 #[cfg(windows)] use crate::windows::*;
