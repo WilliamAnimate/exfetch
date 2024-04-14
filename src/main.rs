@@ -1,17 +1,14 @@
 #![allow(clippy::cast_possible_truncation)]
 #![allow(unused_must_use)]
 
-mod cpu_readout;
-mod distro_readout;
-mod packages_readout;
-mod memory_readout;
-mod uptime_readout;
+mod data;
+#[cfg(unix)] mod unix;
+#[cfg(unix)] use crate::unix::*;
+
+#[cfg(windows)] mod windows;
+#[cfg(windows)] use crate::windows::*;
 
 use std::io::{self, Write, BufWriter};
-use tokio::{task::spawn, join};
-
-#[cfg(windows)] use winreg::enums::*;
-#[cfg(windows)] use winreg::RegKey;
 
 macro_rules! writeln_to_handle_if_not_empty {
     ($handle:expr, $entry:expr, $value:expr, $terminal_width:expr) => {
@@ -48,12 +45,6 @@ macro_rules! writeln_to_handle {
     };
 }
 
-macro_rules! get_env_var {
-    ($var:expr) => {
-        std::env::var($var).unwrap_or_else(|_| String::new())
-    };
-}
-
 /// returns the length as an i16; designed to make the code more concise.
 macro_rules! getlen {
     ($to_find:expr) => {
@@ -81,78 +72,17 @@ fn return_super_fancy_column_closure_stuff(times: i16) -> String {
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    let header_thread = spawn(async {
-        let usr: String;
-        #[cfg(unix)] {usr = get_env_var!("USER");}
-        #[cfg(windows)] {usr = get_env_var!("USERNAME");}
-        let mut result = String::from("\x1B[0;31m\x1B[1mex\x1B[0;36mFetch\x1B[0m - ");
-
-        result.push_str(&usr);
-        result.push('\n');
-
-        result
-    });
-
-    let distro_thread = spawn(async {
-        distro_readout::get()
-    });
-
-    let cpu_name_thread = spawn(async {
-        cpu_readout::get()
-    });
-
-    let desktop_thread = spawn(async {
-        #[cfg(unix)] {
-            get_env_var!("XDG_SESSION_DESKTOP")
-        }
-        #[cfg(windows)] {
-            "Explorer"
-        }
-    });
-
-    let shell_thread = spawn(async {
-        get_env_var!("SHELL")
-    });
-
-    let packages_thread = spawn(async {
-        packages_readout::get()
-    });
-
-    let mut phys_mem = String::new();
-    let mut swap_mem = String::new();
-    let mut uptime = String::new();
-    #[cfg(unix)] {
-        let sysinfo = sysinfo_dot_h::try_collect();
-        match sysinfo {
-            Ok(sysinfo) => {
-                // TODO: implement
-                phys_mem = memory_readout::format_memory_from_bytes(sysinfo.totalram);
-                swap_mem = memory_readout::format_memory_from_bytes(sysinfo.totalswap);
-                uptime = uptime_readout::format_uptime_from_secs(sysinfo.uptime);
-            }
-            Err(_) => (),
-        }
-    }
-
-    // join! to await all `futures` types concurrently
-    let (header, distro, shell, cpu_name, desktop, pkg) = join!(
-        header_thread,
-        distro_thread,
-        shell_thread,
-        cpu_name_thread,
-        desktop_thread,
-        packages_thread,
-    );
-
-    // and then .unwrap the results. pray that none of them contain an `Err` type & panic! the app
-    // that'd be bad lol
-    let header = header.unwrap();
-    let distro = distro.unwrap();
-    let shell = shell.unwrap();
-    let cpu_name = cpu_name.unwrap();
-    let desktop = desktop.unwrap();
-    let pkg = pkg.unwrap();
-    let arch = std::env::consts::ARCH;
+    let readouts = get_readouts::obtain().await;
+    let header = readouts.username;
+    let distro = readouts.distro_or_os;
+    let shell = readouts.shell_name;
+    let cpu_name = readouts.cpu_name;
+    let desktop = readouts.desktop_env;
+    let phys_mem = readouts.phys_ram;
+    let swap_mem = readouts.swap_ram;
+    let pkg = readouts.packages;
+    let uptime = readouts.uptime_formatted;
+    let arch = readouts.cpu_architecture;
 
     // adds a value to a vec!
     let mut array: Vec<i16> = Vec::new(); // array lel
