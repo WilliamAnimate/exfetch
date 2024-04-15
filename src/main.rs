@@ -29,16 +29,7 @@ macro_rules! writeln_to_handle_if_not_empty_i16 {
 macro_rules! writeln_to_handle {
     ($handle:expr, $entry:expr, $value:expr, $terminal_width:expr) => {
         let padding = $terminal_width as usize - ($entry.len() + $value.len());
-
-        let mut to_write = String::from("│\x1B[0;35m ");
-        to_write.push_str($entry);
-        to_write.push_str("\x1B[0m ~ ");
-        to_write.push_str($value.to_string().as_str());
-
-        let mut output = String::from(to_write);
-        output.push_str(&" ".repeat(padding as usize));
-        output.push_str(" │\n");
-
+        let output = format!("│\x1B[0;35m {}\x1B[0m ~ {}{} │\n", $entry, $value, " ".repeat(padding));
         $handle.write_all(output.as_bytes());
     };
 }
