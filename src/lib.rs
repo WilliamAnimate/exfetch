@@ -1,5 +1,5 @@
 // lib.rs
-// OS agnostic functions
+// OS independant functions
 
 pub mod prelude {
     pub use crate::*; // code bloat lmao
@@ -10,7 +10,6 @@ pub fn get_cpu_arch() -> &'static str {
     std::env::consts::ARCH
 }
 
-#[inline(always)]
 pub fn format_cpu_string(text: &str) -> String {
     text.replace("(R)", "")
         .replace("(TM)", "")
@@ -19,7 +18,6 @@ pub fn format_cpu_string(text: &str) -> String {
         .replace("GHz", "GHz)")
 }
 
-#[inline(always)]
 pub fn format_memory_from_bytes(mem: u64) -> String {
     let total = mem / 1_024_000;
     let mut output: String;
@@ -30,8 +28,7 @@ pub fn format_memory_from_bytes(mem: u64) -> String {
         output = String::from("Disabled"); // swap-file only, but we don't know which is swap and
                                            // which is phys. but you should never have 0mb phys
                                            // ram, and sysinfo will return an Err type, which
-                                           // should instruct the code calling this function to not
-                                           // proceed with that struct.
+                                           // should not get us here anyways.
     }
 
     // note: the sysinfo struct does not expose enough useful info to determine the amount of
@@ -39,7 +36,6 @@ pub fn format_memory_from_bytes(mem: u64) -> String {
     output
 }
 
-#[inline(always)]
 pub fn format_uptime_from_secs(raw: i64) -> String {
     // for year calculation, we use a float to be able to divide by 365.25
     // we dont need all that accuracy (accuracy != precision) but yolo
@@ -75,7 +71,6 @@ pub fn format_uptime_from_secs(raw: i64) -> String {
     formatted_uptime
 }
 
-#[inline(always)]
 pub fn generate_header_from_string(usr: String) -> String {
     let mut result = String::from("\x1B[0;31m\x1B[1mex\x1B[0;36mFetch\x1B[0m - ");
 
