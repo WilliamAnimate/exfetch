@@ -13,9 +13,7 @@ use std::io::{self, Write, BufWriter};
 macro_rules! writeln_to_handle_if_not_empty {
     ($handle:expr, $entry:expr, $value:expr, $terminal_width:expr) => {
         if !$value.is_empty() {
-            if !$value.is_empty() {
-                writeln_to_handle!($handle, $entry, $value, $terminal_width);
-            }
+            writeln_to_handle!($handle, $entry, $value, $terminal_width);
         }
     };
 }
