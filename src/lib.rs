@@ -1,5 +1,10 @@
 // lib.rs
 // OS agnostic functions
+
+pub mod prelude {
+    pub use crate::*; // code bloat lmao
+}
+
 #[inline(always)] // haha perf
 pub fn get_cpu_arch() -> &'static str {
     std::env::consts::ARCH

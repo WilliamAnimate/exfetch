@@ -1,7 +1,7 @@
 use tokio::{task::spawn, join};
 use crate::*; // FIXME: this
 use crate::data::Data;
-use exfetch::get_env_var;
+use exfetch::prelude::*;
 
 pub async fn obtain() -> crate::data::Data<'static> {
     // this is an I/O operation: reading how much files are in a specific dir. this is SLOW, so
@@ -12,7 +12,7 @@ pub async fn obtain() -> crate::data::Data<'static> {
 
     let header_thread = spawn(async {
         let usr = get_env_var!("USER");
-        exfetch::generate_header_from_string(usr)
+        generate_header_from_string(usr)
     });
 
     // this is an I/O operation: reading /etc/os-release
@@ -20,8 +20,6 @@ pub async fn obtain() -> crate::data::Data<'static> {
         distro_readout::get()
     });
 
-    // this is an I/O operation: reading /proc/cpuinfo. this is sysfs so its in ram, so is this
-    // really needed?
     let cpu_name_thread = spawn(async {
         cpu_readout::get()
     });
@@ -33,9 +31,9 @@ pub async fn obtain() -> crate::data::Data<'static> {
     let sysinfo = sysinfo_dot_h::try_collect();
     let (phys_mem, swap_mem, uptime) = match sysinfo {
         Ok(sysinfo) => {
-            (exfetch::format_memory_from_bytes(sysinfo.totalram),
-             exfetch::format_memory_from_bytes(sysinfo.totalswap),
-             exfetch::format_uptime_from_secs(sysinfo.uptime))
+            (format_memory_from_bytes(sysinfo.totalram),
+             format_memory_from_bytes(sysinfo.totalswap),
+             format_uptime_from_secs(sysinfo.uptime))
         }
         Err(_) => (String::new(), String::new(), String::new()),
     };
