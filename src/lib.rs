@@ -21,7 +21,7 @@ pub fn format_cpu_string(text: &str) -> String {
 
 #[inline(always)]
 pub fn format_memory_from_bytes(mem: u64) -> String {
-    let total = mem / 1024000;
+    let total = mem / 1_024_000;
     let mut output: String;
     if total != 0 {
         output = total.to_string();

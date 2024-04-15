@@ -50,9 +50,7 @@ pub async fn obtain() -> crate::data::Data<'static> {
     // that'd be bad lol
     let header = header.unwrap();
     let distro = distro.unwrap();
-    let shell = shell;
     let cpu = cpu.unwrap();
-    let desktop = desktop;
     let pkg = pkg.unwrap();
     let arch = exfetch::get_cpu_arch();
 

@@ -11,7 +11,7 @@ pub fn get() -> String {
             continue;
         }
         let parts: Vec<&str> = line.split(':').collect();
-        if parts.len() < 1 {
+        if parts.is_empty() {
             continue;
         }
         let cpu_name = parts[1].trim();
