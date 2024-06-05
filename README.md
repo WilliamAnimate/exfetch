@@ -1,17 +1,16 @@
 # exFetch
 
-A fork of [xFetch](https://codeberg.org/XDR/xFetch) designed to be faster, more maintainable and cross-platform.
+A fork of [xFetch](https://gitlab.com/XDRwastaken/xFetch) designed to be faster, more maintainable and cross-platform.
 
-## y
+## Why?
 
-xFetch's main goal is simplicity, minimalism, and performance. In the performance regard, yeah, its pretty damn fast.
+xFetch's main goal is simplicity, minimalism, and performance. In the performance regard, yeah it's pretty damn fast.
 
 exFetch's main goal is performance, looks, maintainability and to be cross platform.
 
-## Roadmap
-
-At some point I hope to make this multi-platform.
-
-## Attribution
-
-original by XandrCopyrighted, at https://codeberg.org/XDR/xFetch
+# Installation
+## Arch Linux
+```sh
+yay -S exfetch-bin # For those utilizing yay as their AUR helper.
+paru -S exfetch-bin # For those utilizing paru as their AUR helper.
+```
