@@ -10,7 +10,7 @@ tokio = { version = "1.38", features = ["macros", "rt-multi-thread"] }
 winreg = "0.52"
 
 [target.'cfg(unix)'.dependencies]
-sysinfo_dot_h = "0.2"
+sysinfo_dot_h = "0.1.0"
 
 [profile.release]
 opt-level = 'z'
