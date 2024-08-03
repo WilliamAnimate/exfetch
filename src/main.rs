@@ -123,14 +123,10 @@ async fn main() -> io::Result<()> {
     let mut uptime = String::new();
     #[cfg(unix)] {
         let sysinfo = sysinfo_dot_h::try_collect();
-        match sysinfo {
-            Ok(sysinfo) => {
-                // TODO: implement
-                phys_mem = memory_readout::format_memory_from_bytes(sysinfo.totalram);
-                swap_mem = memory_readout::format_memory_from_bytes(sysinfo.totalswap);
-                uptime = uptime_readout::format_uptime_from_secs(sysinfo.uptime);
-            }
-            Err(_) => (),
+        if let Ok(sysinfo) = sysinfo {
+            phys_mem = memory_readout::format_memory_from_bytes(sysinfo.totalram);
+            swap_mem = memory_readout::format_memory_from_bytes(sysinfo.totalswap);
+            uptime = uptime_readout::format_uptime_from_secs(sysinfo.uptime);
         }
     }
 

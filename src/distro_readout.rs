@@ -1,10 +1,13 @@
-// use std::io::{{Write::BufRead}, fs::File, BufReader};
 use std::{io::{BufRead, BufReader}, fs::File};
 
 pub fn get() -> String {
     #[cfg(unix)] {
-        let file = File::open("/etc/os-release").expect("Can't open /etc/os-release!");
-        let mut reader = BufReader::new(file);
+        let file = File::open("/etc/os-release");
+        if !file.is_ok() {
+            // FIXME: somehow inline within a .unwrap_or_else()?
+            return String::new();
+        }
+        let mut reader = BufReader::new(file.unwrap());
         let (mut line, mut pretty_name) = (String::new(), String::new());
 
         while reader.read_line(&mut line).expect("Failed to read line") > 0 {
