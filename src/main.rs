@@ -79,16 +79,8 @@ fn return_super_fancy_column_closure_stuff(times: i16) -> String {
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    let header_thread = spawn(async {
-        let usr: String;
-        #[cfg(unix)] {usr = get_env_var!("USER");}
-        #[cfg(windows)] {usr = get_env_var!("USERNAME");}
-        let mut result = String::from("\x1B[0;31m\x1B[1mex\x1B[0;36mFetch\x1B[0m - ");
-
-        result.push_str(&usr);
-        result.push('\n');
-
-        result
+    let packages_thread = spawn(async {
+        packages_readout::get()
     });
 
     let distro_thread = spawn(async {
@@ -99,22 +91,27 @@ async fn main() -> io::Result<()> {
         cpu_readout::get()
     });
 
-    let desktop_thread = spawn(async {
+    let header = {
+        let usr: String;
+        #[cfg(unix)] {usr = get_env_var!("USER");}
+        #[cfg(windows)] {usr = get_env_var!("USERNAME");}
+        let mut result = String::from("\x1B[0;31m\x1B[1mex\x1B[0;36mFetch\x1B[0m - ");
+
+        result.push_str(&usr);
+        result.push('\n');
+
+        result
+    };
+    let shell = get_env_var!("SHELL");
+
+    let desktop = {
         #[cfg(unix)] {
             get_env_var!("XDG_SESSION_DESKTOP")
         }
         #[cfg(windows)] {
             "Explorer"
         }
-    });
-
-    let shell_thread = spawn(async {
-        get_env_var!("SHELL")
-    });
-
-    let packages_thread = spawn(async {
-        packages_readout::get()
-    });
+    };
 
     let mut phys_mem = String::new();
     let mut swap_mem = String::new();
@@ -129,22 +126,16 @@ async fn main() -> io::Result<()> {
     }
 
     // join! to await all `futures` types concurrently
-    let (header, distro, shell, cpu_name, desktop, pkg) = join!(
-        header_thread,
-        distro_thread,
-        shell_thread,
+    let (cpu_name, distro, pkg) = join!(
         cpu_name_thread,
-        desktop_thread,
+        distro_thread,
         packages_thread,
     );
 
     // and then .unwrap the results. pray that none of them contain an `Err` type & panic! the app
     // that'd be bad lol
-    let header = header.unwrap();
     let distro = distro.unwrap();
-    let shell = shell.unwrap();
     let cpu_name = cpu_name.unwrap();
-    let desktop = desktop.unwrap();
     let pkg = pkg.unwrap();
     let arch = std::env::consts::ARCH;
 
@@ -165,8 +156,6 @@ async fn main() -> io::Result<()> {
 
     let mut handle = io::stdout().lock(); // lock stdout for slightly faster writing
     let mut writer = BufWriter::new(&mut handle); // buffer it for even faster writing
-    // TODO: somehow put this .as_bytes() inside the thread that gets it, for concurrency & speed
-    // something is causing lifetime errors or something.
     writer.write_all(header.as_bytes());
 
     writer.write_all(return_super_fancy_column_stuff("HARDWARE", box_width).as_bytes());
@@ -189,3 +178,4 @@ async fn main() -> io::Result<()> {
 fn get_max_value_of_vec(vec: &[i16]) -> i16 {
     vec.iter().max().map_or_else(|| panic!("the entire vector is empty, wtf?"), |max| *max)
 }
+
