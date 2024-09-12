@@ -116,14 +116,16 @@ async fn main() -> io::Result<()> {
     let mut phys_mem = String::new();
     let mut swap_mem = String::new();
     let mut uptime = String::new();
-    #[cfg(unix)] {
-        let sysinfo = sysinfo_dot_h::try_collect();
-        if let Ok(sysinfo) = sysinfo {
-            phys_mem = memory_readout::format_memory_from_bytes(sysinfo.totalram);
-            swap_mem = memory_readout::format_memory_from_bytes(sysinfo.totalswap);
-            uptime = uptime_readout::format_uptime_from_secs(sysinfo.uptime);
+    tokio::task::block_in_place(|| {
+        #[cfg(unix)] {
+            let sysinfo = sysinfo_dot_h::try_collect();
+            if let Ok(sysinfo) = sysinfo {
+                phys_mem = memory_readout::format_memory_from_bytes(sysinfo.totalram);
+                swap_mem = memory_readout::format_memory_from_bytes(sysinfo.totalswap);
+                uptime = uptime_readout::format_uptime_from_secs(sysinfo.uptime);
+            }
         }
-    }
+    });
 
     // join! to await all `futures` types concurrently
     let (cpu_name, distro, pkg) = join!(
