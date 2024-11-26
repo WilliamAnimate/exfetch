@@ -72,7 +72,8 @@ fn return_super_fancy_column_stuff(text: &str, times: i16) -> String {
 
 fn return_super_fancy_column_closure_stuff(times: i16) -> String {
     let lines = "─".repeat((times + 5).try_into().unwrap());
-    let mut output = String::from("╰");
+    let mut output = String::with_capacity(7 + &lines.len());
+    output.push_str("╰");
     output.push_str(&lines);
     output.push_str("╯\n");
     output
