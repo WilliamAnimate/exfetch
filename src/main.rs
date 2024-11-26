@@ -85,7 +85,7 @@ async fn main() -> io::Result<()> {
     });
 
     let distro_thread = spawn(async {
-        distro_readout::get()
+        distro_readout::get().await
     });
 
     let init_thread = spawn(async {
@@ -93,7 +93,7 @@ async fn main() -> io::Result<()> {
     });
 
     let cpu_name_thread = spawn(async {
-        cpu_readout::get()
+        cpu_readout::get().await
     });
 
     let header = {

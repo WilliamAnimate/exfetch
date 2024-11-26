@@ -1,3 +1,5 @@
+use tokio::fs;
+
 fn process_cpu_name(text: &str) -> String {
     text.replace("(R)", "")
         .replace("(TM)", "")
@@ -6,10 +8,10 @@ fn process_cpu_name(text: &str) -> String {
         .replace("GHz", "GHz)")
 }
 
-pub fn get() -> String {
+pub async fn get() -> String {
     #[cfg(unix)] {
     // TODO: fix indentation hell
-        if let Ok(cpuinfo) = std::fs::read_to_string("/proc/cpuinfo") {
+        if let Ok(cpuinfo) = fs::read_to_string("/proc/cpuinfo").await {
             for line in cpuinfo.lines() {
                 if line.starts_with("model name") {
                     let parts: Vec<&str> = line.split(':').collect();
