@@ -1,4 +1,4 @@
-use std::{fs::File, io::Read};
+use tokio::fs::File;
 
 #[cfg(unix)]
 static INIT_SYSTEMS_UNIX: &[(&str, &str)] = &[
@@ -22,7 +22,7 @@ pub async fn get() -> String {
     #[cfg(unix)] {
         // other types of unixes, eg *BSD, Linux, etc
         for (init_path, init_name) in INIT_SYSTEMS_UNIX {
-            if File::open(init_path).is_err() {
+            if File::open(init_path).await.is_err() {
                 continue;
             }
             return init_name.to_string();
@@ -30,13 +30,13 @@ pub async fn get() -> String {
 
         // FALLBACK: if we cannot find the init, return the contents of /proc/1/comm
         // we dont do this by default because on openrc, /proc/1/comm is `init`. very descriptive.
-        use std::io::BufReader;
-        let f = File::open("/proc/1/comm");
-        if f.is_err() {
+        use tokio::io::{AsyncReadExt, BufReader};
+        let file = File::open("/proc/1/comm").await;
+        if file.is_err() {
             return String::new();
         }
 
-        let mut reader = BufReader::new(f.unwrap());
+        let mut reader = BufReader::new(file.unwrap());
         let mut buf = String::new();
         reader.read_to_string(&mut buf);
         buf
