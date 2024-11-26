@@ -6,6 +6,7 @@ mod distro_readout;
 mod packages_readout;
 mod memory_readout;
 mod uptime_readout;
+mod init_readout;
 
 use std::io::{self, Write, BufWriter};
 use tokio::{task::spawn, join};
@@ -87,6 +88,10 @@ async fn main() -> io::Result<()> {
         distro_readout::get()
     });
 
+    let init_thread = spawn(async {
+        init_readout::get().await
+    });
+
     let cpu_name_thread = spawn(async {
         cpu_readout::get()
     });
@@ -128,10 +133,11 @@ async fn main() -> io::Result<()> {
     });
 
     // join! to await all `futures` types concurrently
-    let (cpu_name, distro, pkg) = join!(
+    let (cpu_name, distro, pkg, init) = join!(
         cpu_name_thread,
         distro_thread,
         packages_thread,
+        init_thread,
     );
 
     // and then .unwrap the results. pray that none of them contain an `Err` type & panic! the app
@@ -139,6 +145,7 @@ async fn main() -> io::Result<()> {
     let distro = distro.unwrap();
     let cpu_name = cpu_name.unwrap();
     let pkg = pkg.unwrap();
+    let init = init.unwrap();
     let arch = std::env::consts::ARCH;
 
     // adds a value to a vec!
@@ -149,7 +156,8 @@ async fn main() -> io::Result<()> {
          getlen!(cpu_name) - 3, // hack fix, i don't know why this is needed.
          getlen!(desktop),
          getlen!(uptime),
-         getlen!(arch)
+         getlen!(arch),
+         getlen!(init),
     ]);
 
     // and then finds the biggest number in a vec!
@@ -171,6 +179,7 @@ async fn main() -> io::Result<()> {
     writeln_to_handle_if_not_empty_i16!(&mut writer, "PKGs", pkg, box_width);
     writeln_to_handle_if_not_empty!(&mut writer, "Distro", &distro, box_width);
     writeln_to_handle_if_not_empty!(&mut writer, "Desktop", &desktop, box_width);
+    writeln_to_handle_if_not_empty!(&mut writer, "Init", &init, box_width);
     writeln_to_handle_if_not_empty!(&mut writer, "Swap", &swap_mem, box_width);
     writer.write_all(return_super_fancy_column_closure_stuff(box_width).as_bytes());
 
