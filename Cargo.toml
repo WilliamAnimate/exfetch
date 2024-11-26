@@ -4,8 +4,7 @@ version = "0.9.0"
 edition = "2021"
 
 [dependencies]
-# tokio = { version = "1.38", features = ["macros", "rt-multi-thread", "fs"] }
-tokio = { version = "1.38", features = ["full"] }
+tokio = { version = "1.38", features = ["macros", "rt-multi-thread", "fs", "io-std", "io-util"] }
 
 [target.'cfg(windows)'.dependencies]
 winreg = "0.52"
