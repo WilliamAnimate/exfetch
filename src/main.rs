@@ -82,21 +82,10 @@ fn return_super_fancy_column_closure_stuff(times: i16) -> String {
 
 #[tokio::main]
 async fn main() -> io::Result<()> {
-    let packages_thread = spawn(async {
-        packages_readout::get()
-    });
-
-    let distro_thread = spawn(async {
-        distro_readout::get().await
-    });
-
-    let init_thread = spawn(async {
-        init_readout::get().await
-    });
-
-    let cpu_name_thread = spawn(async {
-        cpu_readout::get().await
-    });
+    let packages_thread = spawn(async { packages_readout::get() });
+    let distro_thread = spawn(async { distro_readout::get().await });
+    let init_thread = spawn(async { init_readout::get().await });
+    let cpu_name_thread = spawn(async { cpu_readout::get().await });
 
     let header = {
         let usr: String;
