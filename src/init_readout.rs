@@ -25,7 +25,7 @@ pub async fn get() -> String {
             if File::open(init_path).await.is_err() {
                 continue;
             }
-            return init_name.to_string();
+            return (*init_name).to_string();
         }
 
         // FALLBACK: if we cannot find the init, return the contents of /proc/1/comm
