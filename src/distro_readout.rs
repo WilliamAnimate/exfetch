@@ -1,7 +1,16 @@
 use tokio::{io::{BufReader, AsyncBufReadExt}, fs::File};
 
 pub async fn get() -> String {
-    #[cfg(unix)] {
+    #[cfg(target_os = "macos")] {
+        "MacOS".to_owned()
+    }
+    #[cfg(target_os = "android")] {
+        "Android".to_owned()
+    }
+    #[cfg(target_os = "ios")] {
+        "iOS".to_owned()
+    }
+    #[cfg(target_os = "linux")] {
         let file = File::open("/etc/os-release").await;
         if !file.is_ok() {
             // FIXME: somehow inline within a .unwrap_or_else()?
