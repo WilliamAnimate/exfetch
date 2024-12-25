@@ -2,7 +2,7 @@
 #![allow(unused_must_use)]
 
 mod cpu_readout;
-mod distro_readout;
+mod os_readout;
 mod packages_readout;
 mod memory_readout;
 mod uptime_readout;
@@ -83,7 +83,7 @@ fn return_super_fancy_column_closure_stuff(times: i16) -> String {
 #[tokio::main]
 async fn main() -> io::Result<()> {
     let packages_thread = spawn(async { packages_readout::get() });
-    let distro_thread = spawn(async { distro_readout::get().await });
+    let os_thread = spawn(async { os_readout::get().await });
     let init_thread = spawn(async { init_readout::get().await });
     let cpu_name_thread = spawn(async { cpu_readout::get().await });
 
@@ -101,12 +101,9 @@ async fn main() -> io::Result<()> {
     let shell = get_env_var!("SHELL");
 
     let desktop = {
-        #[cfg(unix)] {
-            get_env_var!("XDG_SESSION_DESKTOP")
-        }
-        #[cfg(windows)] {
-            "Explorer"
-        }
+        if cfg!(unix) { &get_env_var!("XDG_SESSION_DESKTOP") }
+        else if cfg!(windows) { "Explorer" }
+        else { "" }
     };
 
     let mut phys_mem = String::new();
@@ -124,16 +121,16 @@ async fn main() -> io::Result<()> {
     });
 
     // join! to await all `futures` types concurrently
-    let (cpu_name, distro, pkg, init) = join!(
+    let (cpu_name, os, pkg, init) = join!(
         cpu_name_thread,
-        distro_thread,
+        os_thread,
         packages_thread,
         init_thread,
     );
 
     // and then .unwrap the results. pray that none of them contain an `Err` type & panic! the app
     // that'd be bad lol
-    let distro = distro.unwrap();
+    let os = os.unwrap();
     let cpu_name = cpu_name.unwrap();
     let pkg = pkg.unwrap();
     let init = init.unwrap();
@@ -142,7 +139,7 @@ async fn main() -> io::Result<()> {
     // adds a value to a vec!
     let mut array: Vec<i16> = Vec::new(); // array lel
     array.extend([
-         getlen!(distro),
+         getlen!(os),
          getlen!(shell),
          getlen!(cpu_name) - 3, // hack fix, i don't know why this is needed.
          getlen!(desktop),
@@ -168,7 +165,7 @@ async fn main() -> io::Result<()> {
     writer.write_all(return_super_fancy_column_stuff("SOFTWARE", box_width).as_bytes());
     writeln_to_handle_if_not_empty!(&mut writer, "Shell", &shell, box_width);
     writeln_to_handle_if_not_empty_i16!(&mut writer, "PKGs", pkg, box_width);
-    writeln_to_handle_if_not_empty!(&mut writer, "Distro", &distro, box_width);
+    writeln_to_handle_if_not_empty!(&mut writer, "os", &os, box_width);
     writeln_to_handle_if_not_empty!(&mut writer, "Desktop", &desktop, box_width);
     writeln_to_handle_if_not_empty!(&mut writer, "Init", &init, box_width);
     writeln_to_handle_if_not_empty!(&mut writer, "Swap", &swap_mem, box_width);
